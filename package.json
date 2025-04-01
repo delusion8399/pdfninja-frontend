@@ -10,11 +10,12 @@
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
-    "@react-pdf-viewer/core": "^3.12.0",
+    "framer-motion": "^12.6.2",
     "next": "15.2.4",
-    "pdfjs-dist": "^3.4.120",
+    "pdfjs-dist": "^5.0.375",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-tooltip": "^5.28.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

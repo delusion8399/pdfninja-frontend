@@ -1,0 +1,29 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#FFDE59"/>
+  
+  <!-- Main Card -->
+  <rect x="100" y="100" width="1000" height="430" fill="white" stroke="black" stroke-width="8"/>
+  <rect x="112" y="112" width="1000" height="430" fill="white" stroke="black" stroke-width="8" transform="rotate(2 600 315)"/>
+  
+  <!-- Shadow -->
+  <rect x="120" y="120" width="1000" height="430" fill="black" transform="translate(20 20)"/>
+  
+  <!-- Title -->
+  <text x="200" y="200" font-family="Arial" font-weight="900" font-size="64" fill="black" transform="rotate(-2 200 200)">Compress PDF Files</text>
+  
+  <!-- Subtitle -->
+  <text x="200" y="260" font-family="Arial" font-weight="700" font-size="32" fill="black" transform="rotate(-1 200 260)">Reduce file size without losing quality</text>
+  
+  <!-- Compression Icon -->
+  <g transform="translate(800 250) rotate(5)">
+    <rect x="0" y="0" width="200" height="200" fill="#FF3A5E" stroke="black" stroke-width="6"/>
+    
+    <!-- Compression Arrows -->
+    <path d="M50 50 L150 50 L150 70 L180 40 L150 10 L150 30 L50 30 Z" fill="white" stroke="black" stroke-width="4"/>
+    <path d="M150 150 L50 150 L50 130 L20 160 L50 190 L50 170 L150 170 Z" fill="white" stroke="black" stroke-width="4"/>
+  </g>
+  
+  <!-- PDFNinja Logo -->
+  <text x="200" y="500" font-family="Arial" font-weight="900" font-size="48" fill="black" transform="rotate(-3 200 500)">PDFNinja</text>
+</svg>

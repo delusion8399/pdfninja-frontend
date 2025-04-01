@@ -1,42 +1,45 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { SpecialZoomLevel, Viewer, Worker } from "@react-pdf-viewer/core";
-import "@react-pdf-viewer/core/lib/styles/index.css";
+import {
+  DragDropContext,
+  Draggable,
+  Droppable,
+  DropResult,
+} from "@hello-pangea/dnd";
+import * as pdfjsLib from "pdfjs-dist";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Tooltip } from "react-tooltip";
+import { config } from "../../config";
 
-// Set up the pdf.js worker from a stable CDN
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://unpkg.com/pdfjs-dist@5.0.375/build/pdf.worker.min.mjs";
 
-// Define TypeScript interface for file object
 interface PDFFile {
   id: string;
   name: string;
   file: File;
   url: string;
-  numPages?: number; // Optional, populated after loading
+  numPages?: number;
 }
 
-export default function MergePage() {
+export default function Page() {
   const [files, setFiles] = useState<PDFFile[]>([]);
   const [isMerging, setIsMerging] = useState(false);
 
-  // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []).map(
       (file: File, index: number) => ({
-        id: `${index}-${file.name}-${Date.now()}`, // Unique ID to prevent conflicts
+        id: `${index}-${file.name}-${Date.now()}`,
         name: file.name,
         file,
         url: URL.createObjectURL(file),
-      }),
+      })
     );
     setFiles((prevFiles) => [...prevFiles, ...selectedFiles]);
   };
 
-  // Handle drag and drop reordering
-  const onDragEnd = useCallback((result: any) => {
-    if (!result.destination) return; // Dropped outside the list
+  const onDragEnd = useCallback((result: DropResult) => {
+    if (!result.destination) return;
 
     const startIndex = result.source.index;
     const finishIndex = result.destination.index;
@@ -49,7 +52,6 @@ export default function MergePage() {
     });
   }, []);
 
-  // Handle PDF merge API call
   const handleMerge = async () => {
     if (files.length < 2) {
       alert("Please select at least two PDFs to merge.");
@@ -63,216 +65,347 @@ export default function MergePage() {
     });
 
     try {
-      const response = await fetch("/api/merge-pdfs", {
+      const response = await fetch(`${config.apiBaseUrl}/pdf/merge`, {
         method: "POST",
         body: formData,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+        },
       });
 
-      if (!response.ok) throw new Error("Merge failed");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || errorData.error || "Merge failed");
+      }
+
+      // Get the filename from Content-Disposition header
+      const contentDisposition = response.headers.get("Content-Disposition");
+      let filename = "merged.pdf"; // Default filename
+      if (contentDisposition) {
+        // Updated regex to handle both quoted and unquoted filenames
+        const matches = /filename=(?:"([^"]+)"|([^;]+))/.exec(
+          contentDisposition
+        );
+        if (matches && (matches[1] || matches[2])) {
+          filename = matches[1] || matches[2];
+        }
+      }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "merged.pdf";
+      link.download = filename;
       link.click();
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error merging PDFs:", error);
-      alert("Failed to merge PDFs. Please try again.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to merge PDFs. Please try again."
+      );
     } finally {
       setIsMerging(false);
     }
   };
 
-  // Clean up object URLs when component unmounts
   useEffect(() => {
     return () => {
       files.forEach((file) => URL.revokeObjectURL(file.url));
     };
-  }, []); // Empty dependency array to run only on unmount
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="bg-white shadow-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-medium text-gray-900 tracking-tight">
-              PDFNinja
-            </h1>
-            <nav className="flex items-center space-x-6">
-              <Link
-                href="/"
-                className="text-gray-700 hover:text-gray-900 transition-colors duration-200"
-              >
-                Home
-              </Link>
-              <Link href="/merge" className="text-[#971E4C] font-medium">
-                Merge PDF
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Merge PDF Files
-          </h2>
-          <p className="text-gray-600">
-            Combine multiple PDFs into one document easily
-          </p>
-        </div>
-
-        {/* File Input */}
-        <div className="flex justify-center mb-8">
-          <label
-            htmlFor="pdf-upload"
-            className="bg-[#971E4C] text-white px-6 py-3 rounded-md font-medium cursor-pointer hover:bg-[#7A173C] transition-all duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#971E4C] focus:ring-offset-2"
-          >
-            Select PDF Files
-            <input
-              id="pdf-upload"
-              type="file"
-              accept=".pdf"
-              multiple
-              className="hidden"
-              onChange={handleFileChange}
-            />
-          </label>
-        </div>
-
-        {/* Add More Files Button */}
-        {files.length > 0 && (
-          <div className="flex justify-end mb-4">
-            <label
-              htmlFor="pdf-upload"
-              className="bg-gray-500 text-white px-4 py-2 rounded-md font-medium cursor-pointer hover:bg-gray-600 transition-all duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-            >
-              Add more files
-              <input
-                id="pdf-upload"
-                type="file"
-                accept=".pdf"
-                multiple
-                className="hidden"
-                onChange={handleFileChange}
-              />
-            </label>
-          </div>
-        )}
-
-        {/* Sortable PDF Grid with Preview */}
-        {files.length > 0 && (
-          <DragDropContext onDragEnd={onDragEnd}>
-            <Droppable droppableId="pdf-list" direction="horizontal">
-              {(provided) => (
-                <div
-                  className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8"
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
+    <div className="min-h-screen bg-[#FFDE59] antialiased">
+      <main className="flex-1 flex flex-col md:flex-row p-6">
+        <div className="flex-1 relative">
+          {files.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-full py-12">
+              <div className="bg-white border-4 border-black p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transform rotate-1 relative max-w-2xl w-full text-center">
+                <h2 className="text-4xl font-black text-black mb-4 tracking-tight">
+                  Merge PDF Files
+                </h2>
+                <p className="text-xl text-black mb-8 font-medium">
+                  Combine PDFs in the order you want with the easiest PDF merger
+                  available.
+                </p>
+                <label
+                  htmlFor="pdf-upload"
+                  className="bg-[#FF3A5E] text-white px-8 py-4 border-3 border-black font-bold cursor-pointer hover:bg-[#FF6B87] transition-all duration-200 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] inline-block"
                 >
-                  {files.map((file, index) => (
-                    <Draggable
-                      key={file.id}
-                      draggableId={file.id}
-                      index={index}
-                    >
-                      {(provided) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                        >
-                          <PDFCard file={file} />
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
+                  Select PDF files
+                  <input
+                    id="pdf-upload"
+                    type="file"
+                    accept=".pdf"
+                    multiple
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                </label>
+                <p className="text-black mt-4 font-bold">or drop PDFs here</p>
+                <div className="absolute -top-6 -right-6 bg-[#4DCCFF] border-3 border-black p-3 transform rotate-12 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <span className="text-xl font-black">DRAG & DROP</span>
                 </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-        )}
+              </div>
+            </div>
+          )}
 
-        {/* Merge Button */}
+          {files.length > 0 && (
+            <div className="relative p-4">
+              <DragDropContext onDragEnd={onDragEnd}>
+                <Droppable droppableId="pdf-list" direction="horizontal">
+                  {(provided) => (
+                    <div
+                      className="flex flex-wrap justify-center gap-6 mb-8 px-4 max-w-[1400px] mx-auto"
+                      {...provided.droppableProps}
+                      ref={provided.innerRef}
+                    >
+                      {files.map((file, index) => (
+                        <Draggable
+                          key={file.id}
+                          draggableId={file.id}
+                          index={index}
+                        >
+                          {(provided) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                            >
+                              <NeoBrutalismPDFCard file={file} index={index} />
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
+
+              <label
+                htmlFor="pdf-upload-more"
+                className="absolute top-4 right-4 bg-[#FF3A5E] text-white w-16 h-16 flex items-center justify-center rounded-full border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer hover:bg-[#FF6B87] transition-all duration-200 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px]"
+              >
+                <span className="text-2xl font-black">+</span>
+                <span className="absolute -top-2 -right-2 bg-[#4DCCFF] text-black text-sm font-black rounded-full w-8 h-8 flex items-center justify-center border-2 border-black">
+                  {files.length}
+                </span>
+                <input
+                  id="pdf-upload-more"
+                  type="file"
+                  accept=".pdf"
+                  multiple
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+              </label>
+            </div>
+          )}
+        </div>
+
         {files.length > 0 && (
-          <div className="flex justify-center">
-            <button
-              onClick={handleMerge}
-              disabled={isMerging}
-              className={`bg-[#971E4C] text-white px-8 py-3 rounded-md font-medium hover:bg-[#7A173C] transition-all duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#971E4C] focus:ring-offset-2 ${
-                isMerging ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-            >
-              {isMerging ? "Merging..." : "Merge PDFs"}
-            </button>
+          <div className="w-full md:w-80 md:border-l-4 md:border-black flex flex-col mt-8 md:mt-0">
+            <div className="p-6 bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] m-4">
+              <h3 className="text-3xl font-black text-black capitalize mb-6 transform -rotate-2">
+                Merge PDF
+              </h3>
+              <div className="bg-[#4DCCFF] p-4 border-3 border-black text-black text-md font-medium mb-8">
+                <p>
+                  To change the order of your PDFs, drag and drop the files as
+                  you want.
+                </p>
+              </div>
+              <button
+                onClick={handleMerge}
+                disabled={isMerging || files.length < 2}
+                className={`w-full bg-[#FF3A5E] text-white px-4 py-3 border-3 border-black font-bold hover:bg-[#FF6B87] transition-all duration-200 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] flex items-center justify-center ${
+                  isMerging || files.length < 2
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
+              >
+                {isMerging ? "Merging..." : "Merge PDF"}
+                <svg
+                  className="w-5 h-5 ml-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
         )}
       </main>
+
+      {/* How It Works Section (Copied from compress, text adapted for merge) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] mb-8 transform rotate-1">
+          <h2 className="text-3xl font-black text-black mb-6 tracking-tight transform -rotate-1">
+            How It Works
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Step 1 */}
+            <div className="bg-[#4DCCFF] border-3 border-black p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <div className="text-3xl font-black mb-4 bg-white w-10 h-10 flex items-center justify-center border-2 border-black">
+                1
+              </div>
+              <h3 className="text-xl font-bold mb-2 text-black">
+                Upload Your PDFs
+              </h3>
+              <p className="text-black">
+                Select the PDF files you want to combine from your device.
+              </p>
+            </div>
+            {/* Step 2 */}
+            <div className="bg-[#FFDE59] border-3 border-black p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <div className="text-3xl font-black mb-4 bg-white w-10 h-10 flex items-center justify-center border-2 border-black">
+                2
+              </div>
+              <h3 className="text-xl font-bold mb-2 text-black">
+                Reorder Files (Optional)
+              </h3>
+              <p className="text-black">
+                Drag and drop the files to arrange them in the desired order.
+              </p>
+            </div>
+            {/* Step 3 */}
+            <div className="bg-[#FF3A5E] border-3 border-black p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <div className="text-3xl font-black mb-4 bg-white w-10 h-10 flex items-center justify-center border-2 border-black">
+                3
+              </div>
+              <h3 className="text-xl font-bold mb-2 text-black">
+                Download Merged File
+              </h3>
+              <p className="text-black">
+                Get your single, combined PDF document.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer (Ensure Footer exists or add one if necessary) */}
+      {/* Assuming a similar footer structure exists or should be added */}
+      <footer className="bg-white border-t-4 border-black py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="mb-4 md:mb-0">
+              <p className="text-xl font-black text-black transform -rotate-2">
+                PDFNinja
+              </p>
+              <p className="text-sm text-black">
+                © {new Date().getFullYear()} PDFNinja. All rights reserved.
+              </p>
+            </div>
+            {/* Add navigation links if needed */}
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
 
-interface PDFFile {
-  id: string;
-  name: string;
-  file: File;
-  url: string;
-  numPages?: number;
-}
-
-function PDFCard({ file }: { file: PDFFile }) {
-  const [previewUrl, setPreviewUrl] = useState<string>(file.url);
+function NeoBrutalismPDFCard({
+  file,
+  index,
+}: {
+  file: PDFFile;
+  index: number;
+}) {
   const [numPages, setNumPages] = useState<number>(0);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rotations = ["rotate-2", "-rotate-1", "rotate-1", "-rotate-2"];
+  const rotation = rotations[index % rotations.length];
 
-  // Update preview URL when file changes
   useEffect(() => {
-    setPreviewUrl(file.url);
-    // setIsLoading(true);
+    const renderPDF = async () => {
+      try {
+        const loadingTask = pdfjsLib.getDocument(file.url);
+        const pdf = await loadingTask.promise;
+
+        setNumPages(pdf.numPages);
+
+        const page = await pdf.getPage(1);
+        const viewport = page.getViewport({ scale: 1.0 });
+
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const context = canvas.getContext("2d");
+        if (!context) return;
+
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        const renderContext = {
+          canvasContext: context,
+          viewport: viewport,
+        };
+        await page.render(renderContext).promise;
+      } catch (error) {
+        console.error("Error rendering PDF:", error);
+      }
+    };
+
+    renderPDF();
   }, [file.url]);
 
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
+
   return (
-    <div
-      id={`pdf-card-${file.id}`}
-      key={file.id}
-      className="group relative bg-white rounded-lg shadow-md cursor-move hover:shadow-lg transition-all duration-200 mx-2"
-    >
-      {/* PDF Preview with Padding */}
-      <div className="p-4 flex justify-center items-center">
-        <div className="h-48 w-full max-w-[180px] rounded-md overflow-hidden">
-          <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.js">
-            {previewUrl && (
-              <div style={{}}>
-                <Viewer
-                  fileUrl={previewUrl}
-                  initialPage={0}
-                  defaultScale={SpecialZoomLevel.PageWidth}
-                  onDocumentLoad={(pdf) => {
-                    setNumPages(pdf.doc.numPages);
-                  }}
-                />
-              </div>
-            )}
-          </Worker>
+    <>
+      <div
+        id={`pdf-card-${file.id}`}
+        data-tooltip-id={`tooltip-${file.id}`}
+        className={`group relative bg-white border-4 border-black overflow-hidden transition-all duration-200 w-full max-w-[240px] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-4px] hover:translate-y-[-4px] ${rotation}`}
+      >
+        <div className="p-4 flex justify-center items-center">
+          <canvas
+            ref={canvasRef}
+            className="w-full h-auto object-contain max-h-[200px] border-2 border-black"
+          ></canvas>
+        </div>
+        <div className="border-t-4 border-black p-2 text-center bg-[#4DCCFF]">
+          <p className="text-sm text-black font-bold truncate px-2">
+            {file.name}
+          </p>
         </div>
       </div>
 
-      {/* File Name Centered Below */}
-      <div className="text-center py-2">
-        <p className="text-sm text-gray-700 truncate">{file.name}</p>
-      </div>
-
-      {/* Tooltip on Hover */}
-      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-10">
-        <p>Name: {file.name}</p>
-        <p>Size: {(file.file.size / 1024).toFixed(2)} KB</p>
-        <p>Pages: {numPages || "Loading..."}</p>
-      </div>
-    </div>
+      <Tooltip
+        id={`tooltip-${file.id}`}
+        place="top"
+        className="z-[1000] !bg-white !text-black !text-sm !rounded-none !py-2 !px-3 !border-3 !border-black !shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+      >
+        <div className="space-y-1">
+          <div>
+            <span className="font-black">Name:</span> {file.name}
+          </div>
+          <div>
+            <span className="font-black">Size:</span>{" "}
+            {formatFileSize(file.file.size)}
+          </div>
+          <div>
+            <span className="font-black">Pages:</span>{" "}
+            {numPages || "Loading..."}
+          </div>
+        </div>
+      </Tooltip>
+    </>
   );
 }
