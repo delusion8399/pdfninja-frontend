@@ -11,7 +11,6 @@ interface PDFFile {
   id: string;
   name: string;
   file: File;
-  url: string;
   numPages?: number;
   selectedPages: number[];
 }
@@ -22,36 +21,47 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const pdfUrlRef = useRef<string | null>(null);
+  const pdfDocRef = useRef<pdfjsLib.PDFDocumentProxy | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
+    // Clean up previous blob URL if it exists
+    if (pdfUrlRef.current) {
+      URL.revokeObjectURL(pdfUrlRef.current);
+    }
+
     const fileObj: PDFFile = {
       id: `${selectedFile.name}-${Date.now()}`,
       name: selectedFile.name,
       file: selectedFile,
-      url: URL.createObjectURL(selectedFile),
       selectedPages: [],
     };
 
+    // Create new blob URL
+    pdfUrlRef.current = URL.createObjectURL(selectedFile);
     setFile(fileObj);
     setCurrentPage(1);
   };
 
   const renderPage = useCallback(
     async (pageNum: number) => {
-      if (!file || !canvasRef.current) return;
+      if (!file || !canvasRef.current || !pdfUrlRef.current) return;
 
       try {
-        const loadingTask = pdfjsLib.getDocument(file.url);
-        const pdf = await loadingTask.promise;
-
-        if (!totalPages) {
-          setTotalPages(pdf.numPages);
+        // If we don't have a PDF document loaded yet, load it
+        if (!pdfDocRef.current) {
+          const loadingTask = pdfjsLib.getDocument(pdfUrlRef.current);
+          pdfDocRef.current = await loadingTask.promise;
         }
 
-        const page = await pdf.getPage(pageNum);
+        if (!totalPages && pdfDocRef.current) {
+          setTotalPages(pdfDocRef.current.numPages);
+        }
+
+        const page = await pdfDocRef.current.getPage(pageNum);
         const viewport = page.getViewport({ scale: 1.5 });
 
         const canvas = canvasRef.current;
@@ -79,13 +89,15 @@ export default function Page() {
     }
   }, [file, currentPage]);
 
+  // Cleanup function
   useEffect(() => {
     return () => {
-      if (file) {
-        URL.revokeObjectURL(file.url);
+      if (pdfUrlRef.current) {
+        URL.revokeObjectURL(pdfUrlRef.current);
       }
+      pdfDocRef.current = null;
     };
-  }, [file]);
+  }, []);
 
   const handlePrevPage = () => {
     if (currentPage > 1) {
@@ -220,7 +232,6 @@ export default function Page() {
 
     return ranges.join(",");
   };
-
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
@@ -244,7 +255,7 @@ export default function Page() {
                 htmlFor="pdf-upload"
                 className="bg-[#FF3A5E] text-white px-8 py-4 border-3 border-black font-bold cursor-pointer hover:bg-[#FF6B87] transition-all duration-200 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] inline-block"
               >
-                Select PDF file {/* Singular */}
+                Select PDF file
                 <input
                   id="pdf-upload"
                   type="file"
@@ -253,10 +264,9 @@ export default function Page() {
                   onChange={handleFileChange}
                 />
               </label>
-              <p className="text-black mt-4 font-bold">or drop PDF here</p>{" "}
-              {/* Singular */}
+              <p className="text-black mt-4 font-bold">or drop PDF here</p>
               <div className="absolute -top-6 -right-6 bg-[#4DCCFF] border-3 border-black p-3 transform rotate-12 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                <span className="text-xl font-black">DRAG & DROP</span>
+                <span className="text-xl font-black">FREE</span>
               </div>
             </div>
           </div>
@@ -311,12 +321,12 @@ export default function Page() {
               {/* Page Selection */}
               <div className="border-3 border-black p-4">
                 <h3 className="text-xl font-bold mb-4 text-black">
-                  Select Pages to Extract
+                  Select Pages to Split
                 </h3>
                 <div className="bg-[#FFDE59] border-2 border-black p-4 mb-4">
                   <p className="text-black font-medium">
                     Click on the page numbers below to select which pages you
-                    want to extract from the PDF.
+                    want to split into separate PDFs.
                   </p>
                 </div>
 
@@ -360,7 +370,7 @@ export default function Page() {
                   </p>
                   {file.selectedPages.length > 0 && (
                     <p className="text-black text-sm mt-1">
-                      Pages to extract:{" "}
+                      Pages to split:
                       {file.selectedPages.sort((a, b) => a - b).join(", ")}
                     </p>
                   )}
@@ -375,14 +385,14 @@ export default function Page() {
                       : ""
                   }`}
                 >
-                  {isSplitting ? "Processing..." : "Extract Selected Pages"}
+                  {isSplitting ? "Processing..." : "Split Selected Pages"}
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* How It Works Section - Moved inside main */}
+        {/* How It Works Section */}
         <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform rotate-1 mb-8">
           <h2 className="text-3xl font-black text-black mb-6 tracking-tight transform -rotate-1">
             How It Works
@@ -396,7 +406,7 @@ export default function Page() {
                 Upload Your PDF
               </h3>
               <p className="text-black">
-                Select the PDF file you want to split from your device.
+                Select the PDF file you want to split into multiple files.
               </p>
             </div>
             <div className="bg-[#FFDE59] border-3 border-black p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
@@ -404,10 +414,10 @@ export default function Page() {
                 2
               </div>
               <h3 className="text-xl font-bold mb-2 text-black">
-                Select Pages to Extract
+                Select Pages to Split
               </h3>
               <p className="text-black">
-                Choose which pages you want to extract from your document.
+                Choose which pages you want to split into separate PDFs.
               </p>
             </div>
             <div className="bg-[#FF3A5E] border-3 border-black p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
@@ -415,10 +425,10 @@ export default function Page() {
                 3
               </div>
               <h3 className="text-xl font-bold mb-2 text-black">
-                Download Extracted PDF
+                Download Split PDFs
               </h3>
               <p className="text-black">
-                Get your new PDF with only the pages you selected.
+                Get your PDFs split into separate files based on your selection.
               </p>
             </div>
           </div>
@@ -436,17 +446,6 @@ export default function Page() {
               <p className="text-sm text-black">
                 © {new Date().getFullYear()} PDFNinja. All rights reserved.
               </p>
-            </div>
-            <div className="flex space-x-6">
-              <a href="#" className="text-black hover:text-[#FF3A5E]">
-                Privacy Policy
-              </a>
-              <a href="#" className="text-black hover:text-[#FF3A5E]">
-                Terms of Service
-              </a>
-              <a href="#" className="text-black hover:text-[#FF3A5E]">
-                Contact
-              </a>
             </div>
           </div>
         </div>

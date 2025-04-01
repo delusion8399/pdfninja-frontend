@@ -1,5 +1,6 @@
 "use client";
 
+import { config } from "@/config";
 import * as pdfjsLib from "pdfjs-dist";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
@@ -10,7 +11,6 @@ interface PDFFile {
   id: string;
   name: string;
   file: File;
-  url: string;
   size: number;
   numPages?: number;
   pagesToRemove: number[];
@@ -22,37 +22,48 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const pdfUrlRef = useRef<string | null>(null);
+  const pdfDocRef = useRef<pdfjsLib.PDFDocumentProxy | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
+    // Clean up previous blob URL if it exists
+    if (pdfUrlRef.current) {
+      URL.revokeObjectURL(pdfUrlRef.current);
+    }
+
     const fileObj: PDFFile = {
       id: `${selectedFile.name}-${Date.now()}`,
       name: selectedFile.name,
       file: selectedFile,
-      url: URL.createObjectURL(selectedFile),
       size: selectedFile.size,
       pagesToRemove: [],
     };
 
+    // Create new blob URL
+    pdfUrlRef.current = URL.createObjectURL(selectedFile);
     setFile(fileObj);
     setCurrentPage(1);
   };
 
   const renderPage = useCallback(
     async (pageNum: number) => {
-      if (!file || !canvasRef.current) return;
+      if (!file || !canvasRef.current || !pdfUrlRef.current) return;
 
       try {
-        const loadingTask = pdfjsLib.getDocument(file.url);
-        const pdf = await loadingTask.promise;
-
-        if (!totalPages) {
-          setTotalPages(pdf.numPages);
+        // If we don't have a PDF document loaded yet, load it
+        if (!pdfDocRef.current) {
+          const loadingTask = pdfjsLib.getDocument(pdfUrlRef.current);
+          pdfDocRef.current = await loadingTask.promise;
         }
 
-        const page = await pdf.getPage(pageNum);
+        if (!totalPages && pdfDocRef.current) {
+          setTotalPages(pdfDocRef.current.numPages);
+        }
+
+        const page = await pdfDocRef.current.getPage(pageNum);
         const viewport = page.getViewport({ scale: 1.5 });
 
         const canvas = canvasRef.current;
@@ -80,13 +91,15 @@ export default function Page() {
     }
   }, [file, currentPage, renderPage]);
 
+  // Cleanup function
   useEffect(() => {
     return () => {
-      if (file) {
-        URL.revokeObjectURL(file.url);
+      if (pdfUrlRef.current) {
+        URL.revokeObjectURL(pdfUrlRef.current);
       }
+      pdfDocRef.current = null;
     };
-  }, [file]);
+  }, []);
 
   const handlePrevPage = () => {
     if (currentPage > 1) {
@@ -166,22 +179,30 @@ export default function Page() {
     formData.append("pagesToRemove", JSON.stringify(file.pagesToRemove));
 
     try {
-      // This is a placeholder for the actual API call
-      // In a real implementation, you would call your backend API
-      // For now, we'll simulate processing with a timeout
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const response = await fetch(`${config.apiBaseUrl}/pdf/remove-pages`, {
+        method: "POST",
+        body: formData,
+      });
 
-      // Simulate a processed file (in reality, this would come from the API)
-      const processedUrl = file.url; // In a real implementation, this would be the URL of the processed file
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to remove pages from PDF");
+      }
 
-      // In a real implementation, you would download the processed file
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = processedUrl;
-      link.download = `${file.name.replace(".pdf", "")}_edited.pdf`;
+      link.href = url;
+      link.download = `${file.name.replace(".pdf", "")}_removed.pdf`;
       link.click();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error removing pages from PDF:", error);
-      alert("Failed to remove pages from PDF. Please try again.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to remove pages from PDF. Please try again."
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -229,7 +250,7 @@ export default function Page() {
           )}
 
           {file && (
-            <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform -rotate-1 mb-8">
+            <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform -rotate-1 mb-8 max-w-5xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* PDF Preview */}
                 <div className="border-3 border-black p-4">
@@ -334,15 +355,9 @@ export default function Page() {
 
                   <button
                     onClick={handleRemovePages}
-                    disabled={
-                      isProcessing ||
-                      file.pagesToRemove.length === 0 ||
-                      file.pagesToRemove.length === totalPages
-                    }
+                    disabled={isProcessing || file.pagesToRemove.length === 0}
                     className={`w-full bg-[#FF3A5E] text-white px-6 py-3 border-3 border-black font-bold hover:bg-[#FF6B87] transition-all duration-200 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] ${
-                      isProcessing ||
-                      file.pagesToRemove.length === 0 ||
-                      file.pagesToRemove.length === totalPages
+                      isProcessing || file.pagesToRemove.length === 0
                         ? "opacity-50 cursor-not-allowed"
                         : ""
                     }`}
@@ -368,7 +383,7 @@ export default function Page() {
                   Upload Your PDF
                 </h3>
                 <p className="text-black">
-                  Select the PDF file you want to edit from your device.
+                  Select the PDF file you want to remove pages from.
                 </p>
               </div>
               <div className="bg-[#FFDE59] border-3 border-black p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
@@ -387,10 +402,10 @@ export default function Page() {
                   3
                 </div>
                 <h3 className="text-xl font-bold mb-2 text-black">
-                  Download Edited PDF
+                  Download New PDF
                 </h3>
                 <p className="text-black">
-                  Get your modified PDF with the selected pages removed.
+                  Get your new PDF without the selected pages.
                 </p>
               </div>
             </div>
