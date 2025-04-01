@@ -81,7 +81,7 @@ export default function Page() {
 
       try {
         // Use cached PDF document if available, otherwise load it
-        let pdfDocument = file.pdfDocument;
+        const pdfDocument = file.pdfDocument;
         if (!pdfDocument) {
           console.warn("PDF document not cached, this should not happen");
           return;
