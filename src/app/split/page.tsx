@@ -1,5 +1,6 @@
 "use client";
 
+import { config } from "@/config";
 import * as pdfjsLib from "pdfjs-dist";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
@@ -76,7 +77,7 @@ export default function Page() {
     if (file) {
       renderPage(currentPage);
     }
-  }, [file, currentPage, renderPage]);
+  }, [file, currentPage]);
 
   useEffect(() => {
     return () => {
@@ -154,31 +155,70 @@ export default function Page() {
     }
 
     setIsSplitting(true);
-    const formData = new FormData();
-    formData.append("pdf", file.file);
-    formData.append("pages", JSON.stringify(file.selectedPages));
+
+    // Convert selected pages to ranges
+    const ranges = convertToRanges(file.selectedPages);
 
     try {
-      const response = await fetch("/api/split-pdf", {
+      const formData = new FormData();
+      formData.append("pdf", file.file);
+      formData.append("ranges", ranges);
+
+      const response = await fetch(`${config.apiBaseUrl}/pdf/split`, {
         method: "POST",
         body: formData,
       });
 
-      if (!response.ok) throw new Error("Split failed");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to split PDF");
+      }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${file.name.replace(".pdf", "")}_split.pdf`;
+      link.download = `${file.name.replace(".pdf", "")}_split.zip`;
       link.click();
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error splitting PDF:", error);
-      alert("Failed to split PDF. Please try again.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to split PDF. Please try again."
+      );
     } finally {
       setIsSplitting(false);
     }
+  };
+
+  // Helper function to convert array of page numbers to ranges
+  const convertToRanges = (pages: number[]): string => {
+    if (pages.length === 0) return "";
+
+    // Sort pages in ascending order
+    const sortedPages = [...pages].sort((a, b) => a - b);
+    const ranges: string[] = [];
+    let start = sortedPages[0];
+
+    for (let i = 1; i <= sortedPages.length; i++) {
+      if (
+        i === sortedPages.length ||
+        sortedPages[i] !== sortedPages[i - 1] + 1
+      ) {
+        if (start === sortedPages[i - 1]) {
+          ranges.push(start.toString());
+        } else {
+          ranges.push(`${start}-${sortedPages[i - 1]}`);
+        }
+        if (i < sortedPages.length) {
+          start = sortedPages[i];
+        }
+      }
+    }
+
+    return ranges.join(",");
   };
 
   const formatFileSize = (bytes: number) => {
