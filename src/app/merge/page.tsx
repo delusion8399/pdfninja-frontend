@@ -68,6 +68,9 @@ export default function Page() {
       const response = await fetch(`${config.apiBaseUrl}/pdf/merge`, {
         method: "POST",
         body: formData,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+        },
       });
 
       if (!response.ok) {
