@@ -1,11 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import * as pdfjsLib from "pdfjs-dist";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { Document, Page as PdfPage, pdfjs } from "react-pdf";
+import "react-pdf/dist/esm/Page/AnnotationLayer.css";
+import "react-pdf/dist/esm/Page/TextLayer.css";
+import { config } from "@/config";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  "https://unpkg.com/pdfjs-dist@5.0.375/build/pdf.worker.min.mjs";
+// Set up PDF.js worker to use local worker file
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
 
 interface PDFFile {
   id: string;
@@ -13,15 +19,19 @@ interface PDFFile {
   file: File;
   url: string;
   size: number;
+  numPages?: number;
   compressedUrl?: string;
   compressedSize?: number;
+  compressionWarning?: string;
 }
 
 export default function Page() {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [compressionLevel, setCompressionLevel] = useState<string>("medium");
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -36,40 +46,27 @@ export default function Page() {
     };
 
     setFile(fileObj);
+    setCurrentPage(1);
+    setError(null);
   };
 
-  const renderPreview = useCallback(async () => {
-    if (!file || !canvasRef.current) return;
-
-    try {
-      const loadingTask = pdfjsLib.getDocument(file.url);
-      const pdf = await loadingTask.promise;
-      const page = await pdf.getPage(1);
-      const viewport = page.getViewport({ scale: 1.5 });
-
-      const canvas = canvasRef.current;
-      const context = canvas.getContext("2d");
-      if (!context) return;
-
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
-
-      const renderContext = {
-        canvasContext: context,
-        viewport: viewport,
-      };
-      await page.render(renderContext).promise;
-    } catch (error) {
-      console.error("Error rendering PDF preview:", error);
-    }
-  }, [file]);
-
-  useEffect(() => {
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+    setTotalPages(numPages);
+    setError(null);
     if (file) {
-      renderPreview();
+      setFile({
+        ...file,
+        numPages: numPages,
+      });
     }
-  }, [file, renderPreview]);
+  };
 
+  const onDocumentLoadError = (err: Error) => {
+    console.error("Error loading PDF:", err);
+    setError(err.message);
+  };
+
+  // Cleanup URLs when component unmounts or file changes
   useEffect(() => {
     return () => {
       if (file) {
@@ -80,6 +77,18 @@ export default function Page() {
       }
     };
   }, [file]);
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
@@ -98,41 +107,61 @@ export default function Page() {
     setIsCompressing(true);
     const formData = new FormData();
     formData.append("pdf", file.file);
-    formData.append("compressionLevel", compressionLevel);
+    formData.append("quality", compressionLevel);
 
     try {
-      // This is a placeholder for the actual API call
-      // In a real implementation, you would call your backend API
-      // For now, we'll simulate compression with a timeout
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const response = await fetch(`${config.apiBaseUrl}/pdf/compress`, {
+        method: "POST",
+        body: formData,
+      });
 
-      // Simulate a compressed file (in reality, this would come from the API)
-      const compressedSize = Math.floor(
-        file.size *
-          (compressionLevel === "low"
-            ? 0.8
-            : compressionLevel === "medium"
-            ? 0.6
-            : 0.4)
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.details || errorData.error || "Compression failed"
+        );
+      }
+
+      const blob = await response.blob();
+      const compressedUrl = window.URL.createObjectURL(blob);
+
+      // Calculate compressed size from the blob
+      const compressedSize = blob.size;
+
+      const reductionPercent = Math.round(
+        (1 - compressedSize / file.size) * 100
       );
+
+      // If the compression is less than 5%, show a warning message
+      let compressionWarning: string | undefined = undefined;
+      if (reductionPercent < 5) {
+        compressionWarning =
+          "This PDF contains mostly text or is already optimized, resulting in minimal compression.";
+      } else if (
+        reductionPercent >= 5 &&
+        reductionPercent < 15 &&
+        compressionLevel === "high"
+      ) {
+        compressionWarning =
+          "Try Medium or Low quality for greater size reduction if image quality is less important.";
+      } else if (reductionPercent >= 50 && compressionLevel === "low") {
+        compressionWarning =
+          "Significant compression achieved! Check that the image quality meets your needs.";
+      }
 
       setFile({
         ...file,
-        compressedUrl: file.url, // In a real implementation, this would be the URL of the compressed file
+        compressedUrl: compressedUrl,
         compressedSize: compressedSize,
+        compressionWarning: compressionWarning,
       });
-
-      // In a real implementation, you would download the compressed file
-      // const blob = await response.blob();
-      // const url = window.URL.createObjectURL(blob);
-      // const link = document.createElement("a");
-      // link.href = url;
-      // link.download = `compressed_${file.name}`;
-      // link.click();
-      // window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error compressing PDF:", error);
-      alert("Failed to compress PDF. Please try again.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to compress PDF. Please try again."
+      );
     } finally {
       setIsCompressing(false);
     }
@@ -161,99 +190,229 @@ export default function Page() {
           </p>
         </div>
 
-        {/* File Upload Section */}
-        <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] mb-8 transform rotate-1">
-          <div className="flex flex-col items-center justify-center">
-            <label
-              htmlFor="file-upload"
-              className="w-full max-w-xl h-64 flex flex-col items-center justify-center border-3 border-dashed border-black rounded-none cursor-pointer bg-[#4DCCFF] hover:bg-[#7DDAFF] transition-colors duration-200 relative p-6"
-            >
-              <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                <svg
-                  className="w-12 h-12 mb-4 text-black"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                  ></path>
-                </svg>
-                <p className="mb-2 text-xl font-bold text-black">
-                  Click to upload or drag and drop
-                </p>
-                <p className="text-sm font-medium text-black">
-                  PDF file (MAX. 100MB)
-                </p>
-              </div>
-              <input
-                id="file-upload"
-                name="file-upload"
-                type="file"
-                className="hidden"
-                accept=".pdf"
-                onChange={handleFileChange}
-                disabled={isCompressing}
-              />
-            </label>
+        {/* File Upload Section - Only shown when no file is selected */}
+        {!file && (
+          <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] mb-8 transform rotate-1">
+            <div className="flex flex-col items-center justify-center">
+              <label
+                htmlFor="file-upload"
+                className="w-full max-w-xl h-64 flex flex-col items-center justify-center border-3 border-dashed border-black rounded-none cursor-pointer bg-[#4DCCFF] hover:bg-[#7DDAFF] transition-colors duration-200 relative p-6"
+              >
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <svg
+                    className="w-12 h-12 mb-4 text-black"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                    ></path>
+                  </svg>
+                  <p className="mb-2 text-xl font-bold text-black">
+                    Click to upload or drag and drop
+                  </p>
+                  <p className="text-sm font-medium text-black">
+                    PDF file (MAX. 100MB)
+                  </p>
+                </div>
+                <input
+                  id="file-upload"
+                  name="file-upload"
+                  type="file"
+                  className="hidden"
+                  accept=".pdf"
+                  onChange={handleFileChange}
+                  disabled={isCompressing}
+                />
+              </label>
 
-            {/* Compression Options */}
-            <div className="w-full max-w-xl mt-8">
-              <h3 className="text-xl font-bold mb-4 text-black">
-                Compression Level
-              </h3>
-              <div className="grid grid-cols-3 gap-4">
-                <button
-                  onClick={() => setCompressionLevel("low")}
-                  className={`p-4 border-3 border-black font-bold transition-all duration-200 ${
-                    compressionLevel === "low"
-                      ? "bg-[#FF3A5E] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-                      : "bg-white text-black hover:bg-[#FFDE59]"
-                  }`}
-                >
-                  Low
-                  <span className="block text-sm mt-1">Better Quality</span>
-                </button>
-                <button
-                  onClick={() => setCompressionLevel("medium")}
-                  className={`p-4 border-3 border-black font-bold transition-all duration-200 ${
-                    compressionLevel === "medium"
-                      ? "bg-[#FF3A5E] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-                      : "bg-white text-black hover:bg-[#FFDE59]"
-                  }`}
-                >
-                  Medium
-                  <span className="block text-sm mt-1">Balanced</span>
-                </button>
-                <button
-                  onClick={() => setCompressionLevel("high")}
-                  className={`p-4 border-3 border-black font-bold transition-all duration-200 ${
-                    compressionLevel === "high"
-                      ? "bg-[#FF3A5E] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-                      : "bg-white text-black hover:bg-[#FFDE59]"
-                  }`}
-                >
-                  High
-                  <span className="block text-sm mt-1">Smaller Size</span>
-                </button>
+              {/* Compression Options */}
+              <div className="w-full max-w-xl mt-8">
+                <h3 className="text-xl font-bold mb-4 text-black">
+                  Compression Level
+                </h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <button
+                    onClick={() => setCompressionLevel("low")}
+                    className={
+                      "p-4 border-3 border-black font-bold transition-all duration-200 " +
+                      (compressionLevel === "low"
+                        ? "bg-[#FF3A5E] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                        : "bg-white text-black hover:bg-[#FFDE59]")
+                    }
+                  >
+                    Low Quality
+                    <span className="block text-sm mt-1">
+                      Maximum Size Reduction
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setCompressionLevel("medium")}
+                    className={
+                      "p-4 border-3 border-black font-bold transition-all duration-200 " +
+                      (compressionLevel === "medium"
+                        ? "bg-[#FF3A5E] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                        : "bg-white text-black hover:bg-[#FFDE59]")
+                    }
+                  >
+                    Medium Quality
+                    <span className="block text-sm mt-1">
+                      Balanced Compression
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setCompressionLevel("high")}
+                    className={
+                      "p-4 border-3 border-black font-bold transition-all duration-200 " +
+                      (compressionLevel === "high"
+                        ? "bg-[#FF3A5E] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                        : "bg-white text-black hover:bg-[#FFDE59]")
+                    }
+                  >
+                    High Quality
+                    <span className="block text-sm mt-1">
+                      Minimal Size Reduction
+                    </span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Preview and Compress Section */}
         {file && (
           <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] mb-8 transform -rotate-1">
+            {/* Compression Options - moved here when file is selected */}
+            <div className="mb-8">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-black">
+                  Compression Level
+                </h3>
+                <label
+                  htmlFor="file-upload-change"
+                  className="bg-[#4DCCFF] text-black px-4 py-2 border-2 border-black font-bold hover:bg-[#7DDAFF] transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] cursor-pointer"
+                >
+                  Choose Different PDF
+                  <input
+                    id="file-upload-change"
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    disabled={isCompressing}
+                  />
+                </label>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <button
+                  onClick={() => setCompressionLevel("low")}
+                  className={
+                    "p-4 border-3 border-black font-bold transition-all duration-200 " +
+                    (compressionLevel === "low"
+                      ? "bg-[#FF3A5E] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                      : "bg-white text-black hover:bg-[#FFDE59]")
+                  }
+                >
+                  Low Quality
+                  <span className="block text-sm mt-1">
+                    Maximum Size Reduction
+                  </span>
+                </button>
+                <button
+                  onClick={() => setCompressionLevel("medium")}
+                  className={
+                    "p-4 border-3 border-black font-bold transition-all duration-200 " +
+                    (compressionLevel === "medium"
+                      ? "bg-[#FF3A5E] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                      : "bg-white text-black hover:bg-[#FFDE59]")
+                  }
+                >
+                  Medium Quality
+                  <span className="block text-sm mt-1">
+                    Balanced Compression
+                  </span>
+                </button>
+                <button
+                  onClick={() => setCompressionLevel("high")}
+                  className={
+                    "p-4 border-3 border-black font-bold transition-all duration-200 " +
+                    (compressionLevel === "high"
+                      ? "bg-[#FF3A5E] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                      : "bg-white text-black hover:bg-[#FFDE59]")
+                  }
+                >
+                  High Quality
+                  <span className="block text-sm mt-1">
+                    Minimal Size Reduction
+                  </span>
+                </button>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* PDF Preview */}
               <div className="border-3 border-black p-4">
                 <h3 className="text-xl font-bold mb-4 text-black">Preview</h3>
-                <div className="flex justify-center items-center bg-gray-100 border-2 border-black">
-                  <canvas ref={canvasRef} className="max-w-full" />
+                <div className="flex justify-center items-center bg-gray-100 border-2 border-black min-h-[400px] relative">
+                  <Document
+                    file={file.url}
+                    onLoadSuccess={onDocumentLoadSuccess}
+                    onLoadError={onDocumentLoadError}
+                    loading={
+                      <div className="flex items-center justify-center h-full w-full">
+                        <div className="text-black font-bold">Loading...</div>
+                      </div>
+                    }
+                    error={
+                      <div className="flex items-center justify-center h-full w-full">
+                        <div className="text-black font-bold">
+                          {error || "Error loading PDF"}
+                        </div>
+                      </div>
+                    }
+                    className="flex items-center justify-center w-full h-full"
+                  >
+                    <PdfPage
+                      pageNumber={currentPage}
+                      width={400}
+                      renderTextLayer={false}
+                      renderAnnotationLayer={false}
+                      className="max-w-full h-auto object-contain"
+                    />
+                  </Document>
+                </div>
+                <div className="flex justify-between items-center mt-4">
+                  <button
+                    onClick={handlePrevPage}
+                    disabled={currentPage <= 1}
+                    className={`bg-[#4DCCFF] text-black px-4 py-2 border-2 border-black font-bold ${
+                      currentPage <= 1
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:bg-[#7DDAFF] transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px]"
+                    }`}
+                  >
+                    Previous
+                  </button>
+                  <span className="font-bold text-black">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button
+                    onClick={handleNextPage}
+                    disabled={currentPage >= totalPages}
+                    className={`bg-[#4DCCFF] text-black px-4 py-2 border-2 border-black font-bold ${
+                      currentPage >= totalPages
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:bg-[#7DDAFF] transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px]"
+                    }`}
+                  >
+                    Next
+                  </button>
                 </div>
                 <div className="mt-4">
                   <p className="font-bold text-black">{file.name}</p>
@@ -284,6 +443,11 @@ export default function Page() {
                         )}
                         %
                       </p>
+                      {file.compressionWarning && (
+                        <p className="mt-2 text-sm bg-white p-2 border border-black text-black">
+                          ⓘ {file.compressionWarning}
+                        </p>
+                      )}
                     </div>
                     <button
                       onClick={handleDownload}
@@ -336,7 +500,9 @@ export default function Page() {
                 Choose Compression Level
               </h3>
               <p className="text-black">
-                Select your preferred compression level based on your needs.
+                Select your preferred compression level. Lower quality gives
+                smaller files but may reduce image clarity. Higher quality
+                preserves details with less compression.
               </p>
             </div>
             <div className="bg-[#FF3A5E] border-3 border-black p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">

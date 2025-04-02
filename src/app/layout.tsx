@@ -27,6 +27,7 @@ export const metadata: Metadata = {
   authors: [{ name: "PDFNinja Team" }],
   creator: "PDFNinja",
   publisher: "PDFNinja",
+  viewport: "width=device-width, initial-scale=1.0, maximum-scale=1.0",
   openGraph: {
     title: "PDFNinja - Swift PDF Mastery | Free PDF Tools",
     description:
@@ -64,12 +65,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="scroll-smooth">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased ${poppins.className}`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased ${poppins.className} min-h-screen flex flex-col`}
       >
-        <Navigation />
-        {children}
+        <div className="flex-grow flex flex-col">
+          <Navigation />
+          <div className="flex-grow">{children}</div>
+        </div>
       </body>
     </html>
   );

@@ -1,29 +1,44 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "PDFNinja - Swift PDF Mastery | Free PDF Tools",
+  title: "PDF Ninja - PDF Tools",
   description:
-    "Handle your PDFs with ninja-like precision. Fast, intuitive tools for merging, splitting and managing your PDF documents.",
-  keywords:
-    "PDF tools, merge PDF, split PDF, PDF editor, free PDF tools, online PDF tools",
+    "Free online PDF tools for merging, splitting, compressing, and more.",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
+  manifest: "/site.webmanifest",
+  themeColor: "#0F172A",
+  viewport: "width=device-width, initial-scale=1",
+  robots: "index, follow",
   openGraph: {
-    title: "PDFNinja - Swift PDF Mastery | Free PDF Tools",
+    type: "website",
+    locale: "en_US",
+    url: "https://pdfninja.app",
+    siteName: "PDF Ninja",
+    title: "PDF Ninja - PDF Tools",
     description:
-      "Handle your PDFs with ninja-like precision. Fast, intuitive tools for merging, splitting and managing your PDF documents.",
+      "Free online PDF tools for merging, splitting, compressing, and more.",
     images: [
       {
-        url: "/og-image.svg",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "PDFNinja - Swift PDF Mastery",
+        alt: "PDF Ninja",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "PDFNinja - Swift PDF Mastery | Free PDF Tools",
+    title: "PDF Ninja - PDF Tools",
     description:
-      "Handle your PDFs with ninja-like precision. Fast, intuitive tools for merging, splitting and managing your PDF documents.",
-    images: ["/og-image.svg"],
+      "Free online PDF tools for merging, splitting, compressing, and more.",
+    images: ["/og-image.png"],
   },
 };

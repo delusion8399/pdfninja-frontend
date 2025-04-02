@@ -57,6 +57,22 @@ body {
   box-shadow: 12px 12px 0px 0px rgba(0, 0, 0, 1);
 }
 
+/* Responsive shadow classes */
+@media (max-width: 640px) {
+  .neo-shadow {
+    box-shadow: 5px 5px 0px 0px rgba(0, 0, 0, 1);
+  }
+
+  .neo-shadow-lg {
+    box-shadow: 8px 8px 0px 0px rgba(0, 0, 0, 1);
+  }
+
+  .neo-hover:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 7px 7px 0px 0px rgba(0, 0, 0, 1);
+  }
+}
+
 /* Add custom animation for neo-brutalism elements */
 @keyframes neo-bounce {
   0%,
@@ -70,4 +86,38 @@ body {
 
 .neo-bounce {
   animation: neo-bounce 1s ease infinite;
+}
+
+/* Prevent overflow issues on small screens */
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block;
+  max-width: 100%;
+}
+
+/* Improve text readability on all devices */
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Ensure buttons and interactive elements are easily tappable on mobile */
+button,
+a,
+input[type="button"],
+input[type="submit"] {
+  touch-action: manipulation;
 }

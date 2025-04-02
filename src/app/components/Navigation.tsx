@@ -75,6 +75,10 @@ const navItems: NavItem[] = [
 
 export default function Navigation() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileSubmenuOpen, setMobileSubmenuOpen] = useState<string | null>(
+    null
+  );
 
   const handleCategoryHover = (category: string) => {
     setActiveCategory(category);
@@ -82,6 +86,15 @@ export default function Navigation() {
 
   const handleMouseLeave = () => {
     setActiveCategory(null);
+  };
+
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+    setMobileSubmenuOpen(null);
+  };
+
+  const toggleMobileSubmenu = (category: string) => {
+    setMobileSubmenuOpen(mobileSubmenuOpen === category ? null : category);
   };
 
   return (
@@ -95,8 +108,19 @@ export default function Navigation() {
             PDFNinja
           </Link>
 
-          {/* Auth Buttons */}
-          <div className="flex items-center space-x-4">
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden p-2 border-2 border-black hover:bg-[#FFDE59]"
+            onClick={toggleMobileMenu}
+            aria-label="Toggle mobile menu"
+          >
+            <span className="block w-6 h-0.5 bg-black mb-1.5"></span>
+            <span className="block w-6 h-0.5 bg-black mb-1.5"></span>
+            <span className="block w-6 h-0.5 bg-black"></span>
+          </button>
+
+          {/* Auth Buttons - Hidden on mobile */}
+          <div className="hidden md:flex items-center space-x-4">
             <Link
               href="/login"
               className="text-black font-bold hover:text-[#FF3A5E] transition-colors duration-200 transform hover:scale-105"
@@ -110,11 +134,67 @@ export default function Navigation() {
         </div>
       </div>
 
-      {/* PDF Tools Navigation - Horizontal Menu */}
-      <div className="border-t-4 border-black bg-white">
+      {/* Mobile Menu */}
+      <div
+        className={`border-t-4 border-black bg-white md:hidden overflow-hidden transition-all duration-300 ${
+          mobileMenuOpen ? "max-h-screen" : "max-h-0"
+        }`}
+      >
+        <div className="px-4 py-2">
+          {/* Mobile Auth Buttons */}
+          <div className="flex justify-between py-4 border-b-2 border-black">
+            <Link
+              href="/login"
+              className="text-black font-bold hover:text-[#FF3A5E] transition-colors duration-200"
+            >
+              Login
+            </Link>
+            <button className="bg-[#FF3A5E] text-white px-4 py-2 border-3 border-black font-bold hover:bg-[#FF6B87] transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              Sign Up
+            </button>
+          </div>
+
+          {/* Mobile Navigation Accordion */}
+          <div className="py-2">
+            {navItems.map((category) => (
+              <div key={category.title} className="border-b-2 border-black">
+                <button
+                  className="w-full text-left py-3 px-2 font-bold text-black flex justify-between items-center"
+                  onClick={() => toggleMobileSubmenu(category.title)}
+                >
+                  {category.title}
+                  <span>
+                    {mobileSubmenuOpen === category.title ? "−" : "+"}
+                  </span>
+                </button>
+
+                {mobileSubmenuOpen === category.title && (
+                  <div className="pl-2 pb-2">
+                    {category.items.map((item) => (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className="flex items-center py-2 px-4 text-black hover:bg-[#FFDE59]"
+                      >
+                        {item.icon && (
+                          <span className="mr-2 text-xl">{item.icon}</span>
+                        )}
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* PDF Tools Navigation - Horizontal Menu - Hidden on mobile */}
+      <div className="border-t-4 border-black bg-white hidden md:block">
         <div className="max-w-7xl mx-auto">
           <nav className="relative z-[300]" onMouseLeave={handleMouseLeave}>
-            <div className="grid grid-cols-6 text-sm">
+            <div className="grid grid-cols-3 lg:grid-cols-6 text-sm">
               {navItems.map((category, idx) => (
                 <div
                   key={category.title}
