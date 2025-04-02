@@ -1,13 +1,5 @@
-const env = process.env.NODE_ENV;
-
-const HOSTS = {
-  development: "http://localhost:8000",
-  production: "https://pdfninja-api.onrender.com",
-  test: "https://pdfninja-api.onrender.com",
-};
-
-const API_HOST = HOSTS[env] || "https://pdfninja-api.onrender.com";
-
 export const config = {
-  apiBaseUrl: API_HOST,
+  apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080",
+  isDevelopment: process.env.NODE_ENV === "development",
+  isProduction: process.env.NODE_ENV === "production",
 };

@@ -6,13 +6,18 @@ import {
   Droppable,
   DropResult,
 } from "@hello-pangea/dnd";
-import * as pdfjsLib from "pdfjs-dist";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/esm/Page/AnnotationLayer.css";
+import "react-pdf/dist/esm/Page/TextLayer.css";
 import { Tooltip } from "react-tooltip";
 import { config } from "../../config";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  "https://unpkg.com/pdfjs-dist@5.0.375/build/pdf.worker.min.mjs";
+// Set up PDF.js worker to use local worker file
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
 
 interface PDFFile {
   id: string;
@@ -22,7 +27,7 @@ interface PDFFile {
   numPages?: number;
 }
 
-export default function Page() {
+export default function MergePage() {
   const [files, setFiles] = useState<PDFFile[]>([]);
   const [isMerging, setIsMerging] = useState(false);
 
@@ -316,7 +321,7 @@ export default function Page() {
   );
 }
 
-function NeoBrutalismPDFCard({
+const NeoBrutalismPDFCard = React.memo(function NeoBrutalismPDFCard({
   file,
   index,
 }: {
@@ -324,42 +329,19 @@ function NeoBrutalismPDFCard({
   index: number;
 }) {
   const [numPages, setNumPages] = useState<number>(0);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [error, setError] = useState<string | null>(null);
   const rotations = ["rotate-2", "-rotate-1", "rotate-1", "-rotate-2"];
   const rotation = rotations[index % rotations.length];
 
-  useEffect(() => {
-    const renderPDF = async () => {
-      try {
-        const loadingTask = pdfjsLib.getDocument(file.url);
-        const pdf = await loadingTask.promise;
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+    setNumPages(numPages);
+    setError(null);
+  };
 
-        setNumPages(pdf.numPages);
-
-        const page = await pdf.getPage(1);
-        const viewport = page.getViewport({ scale: 1.0 });
-
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const context = canvas.getContext("2d");
-        if (!context) return;
-
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        const renderContext = {
-          canvasContext: context,
-          viewport: viewport,
-        };
-        await page.render(renderContext).promise;
-      } catch (error) {
-        console.error("Error rendering PDF:", error);
-      }
-    };
-
-    renderPDF();
-  }, [file.url]);
+  const onDocumentLoadError = (err: Error) => {
+    console.error("Error loading PDF:", err);
+    setError(err.message);
+  };
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
@@ -372,13 +354,38 @@ function NeoBrutalismPDFCard({
       <div
         id={`pdf-card-${file.id}`}
         data-tooltip-id={`tooltip-${file.id}`}
-        className={`group relative bg-white border-4 border-black overflow-hidden transition-all duration-200 w-full max-w-[240px] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-4px] hover:translate-y-[-4px] ${rotation}`}
+        className={`group relative bg-white border-4 border-black overflow-hidden transition-all duration-200 w-[200px] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-4px] hover:translate-y-[-4px] ${rotation}`}
       >
-        <div className="p-4 flex justify-center items-center">
-          <canvas
-            ref={canvasRef}
-            className="w-full h-auto object-contain max-h-[200px] border-2 border-black"
-          ></canvas>
+        <div className="aspect-[1/1.414] w-full relative p-2">
+          {file?.url && (
+            <Document
+              file={file.url}
+              key={`${file.url}-${Date.now()}`}
+              onLoadSuccess={onDocumentLoadSuccess}
+              onLoadError={onDocumentLoadError}
+              loading={
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 border-2 border-black">
+                  <div className="text-black font-bold">Loading...</div>
+                </div>
+              }
+              error={
+                <div className="absolute inset-0 flex items-center justify-center bg-red-100 border-2 border-black">
+                  <div className="text-black font-bold">
+                    {error || "Error loading PDF"}
+                  </div>
+                </div>
+              }
+              className="absolute inset-0 flex items-center justify-center"
+            >
+              <Page
+                pageNumber={1}
+                width={192}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+                className="!w-full !h-full object-contain"
+              />
+            </Document>
+          )}{" "}
         </div>
         <div className="border-t-4 border-black p-2 text-center bg-[#4DCCFF]">
           <p className="text-sm text-black font-bold truncate px-2">
@@ -408,4 +415,4 @@ function NeoBrutalismPDFCard({
       </Tooltip>
     </>
   );
-}
+});

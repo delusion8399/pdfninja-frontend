@@ -1,16 +1,21 @@
 "use client";
 
 import { config } from "@/config";
-import * as pdfjsLib from "pdfjs-dist";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { Document, Page as PDFPage, pdfjs } from "react-pdf";
+import "react-pdf/dist/esm/Page/AnnotationLayer.css";
+import "react-pdf/dist/esm/Page/TextLayer.css";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  "https://unpkg.com/pdfjs-dist@5.0.375/build/pdf.worker.min.mjs";
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
 
 interface PDFFile {
   id: string;
   name: string;
   file: File;
+  url: string;
   numPages?: number;
   selectedPages: number[];
 }
@@ -20,84 +25,48 @@ export default function Page() {
   const [isSplitting, setIsSplitting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const pdfUrlRef = useRef<string | null>(null);
-  const pdfDocRef = useRef<pdfjsLib.PDFDocumentProxy | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
-    // Clean up previous blob URL if it exists
-    if (pdfUrlRef.current) {
-      URL.revokeObjectURL(pdfUrlRef.current);
-    }
-
     const fileObj: PDFFile = {
       id: `${selectedFile.name}-${Date.now()}`,
       name: selectedFile.name,
       file: selectedFile,
+      url: URL.createObjectURL(selectedFile),
       selectedPages: [],
     };
 
-    // Create new blob URL
-    pdfUrlRef.current = URL.createObjectURL(selectedFile);
     setFile(fileObj);
     setCurrentPage(1);
   };
 
-  const renderPage = useCallback(
-    async (pageNum: number) => {
-      if (!file || !canvasRef.current || !pdfUrlRef.current) return;
-
-      try {
-        // If we don't have a PDF document loaded yet, load it
-        if (!pdfDocRef.current) {
-          const loadingTask = pdfjsLib.getDocument(pdfUrlRef.current);
-          pdfDocRef.current = await loadingTask.promise;
-        }
-
-        if (!totalPages && pdfDocRef.current) {
-          setTotalPages(pdfDocRef.current.numPages);
-        }
-
-        const page = await pdfDocRef.current.getPage(pageNum);
-        const viewport = page.getViewport({ scale: 1.5 });
-
-        const canvas = canvasRef.current;
-        const context = canvas.getContext("2d");
-        if (!context) return;
-
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        const renderContext = {
-          canvasContext: context,
-          viewport: viewport,
-        };
-        await page.render(renderContext).promise;
-      } catch (error) {
-        console.error("Error rendering PDF page:", error);
-      }
-    },
-    [file, totalPages]
-  );
-
-  useEffect(() => {
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+    setTotalPages(numPages);
+    setError(null);
     if (file) {
-      renderPage(currentPage);
+      setFile((prev) => ({
+        ...prev!,
+        selectedPages: [],
+      }));
     }
-  }, [file, currentPage]);
+  };
+
+  const onDocumentLoadError = (err: Error) => {
+    console.error("Error loading PDF:", err);
+    setError(err.message);
+  };
 
   // Cleanup function
   useEffect(() => {
     return () => {
-      if (pdfUrlRef.current) {
-        URL.revokeObjectURL(pdfUrlRef.current);
+      if (file?.url) {
+        URL.revokeObjectURL(file.url);
       }
-      pdfDocRef.current = null;
     };
-  }, []);
+  }, [file]);
 
   const handlePrevPage = () => {
     if (currentPage > 1) {
@@ -122,6 +91,7 @@ export default function Page() {
 
       if (pageIndex === -1) {
         selectedPages.push(pageNum);
+        selectedPages.sort((a, b) => a - b);
       } else {
         selectedPages.splice(pageIndex, 1);
       }
@@ -280,8 +250,33 @@ export default function Page() {
                 <h3 className="text-xl font-bold mb-4 text-black">
                   PDF Preview
                 </h3>
-                <div className="flex justify-center items-center bg-gray-100 border-2 border-black min-h-[400px]">
-                  <canvas ref={canvasRef} className="max-w-full" />
+                <div className="flex justify-center items-center bg-gray-100 border-2 border-black min-h-[400px] relative">
+                  <Document
+                    file={file.url}
+                    onLoadSuccess={onDocumentLoadSuccess}
+                    onLoadError={onDocumentLoadError}
+                    loading={
+                      <div className="flex items-center justify-center h-full w-full">
+                        <div className="text-black font-bold">Loading...</div>
+                      </div>
+                    }
+                    error={
+                      <div className="flex items-center justify-center h-full w-full">
+                        <div className="text-black font-bold">
+                          {error || "Error loading PDF"}
+                        </div>
+                      </div>
+                    }
+                    className="flex items-center justify-center w-full h-full"
+                  >
+                    <PDFPage
+                      pageNumber={currentPage}
+                      width={400}
+                      renderTextLayer={false}
+                      renderAnnotationLayer={false}
+                      className="max-w-full h-auto object-contain"
+                    />
+                  </Document>
                 </div>
                 <div className="flex justify-between items-center mt-4">
                   <button
@@ -327,38 +322,43 @@ export default function Page() {
                   <p className="text-black font-medium">
                     Click on the page numbers below to select which pages you
                     want to split into separate PDFs.
+                    {totalPages > 0 && (
+                      <span className="block mt-2 text-sm">
+                        Total pages: {totalPages} | Selected:{" "}
+                        {file.selectedPages.length}
+                      </span>
+                    )}
                   </p>
                 </div>
 
-                <div className="flex flex-wrap gap-2 mb-4 max-h-[200px] overflow-y-auto p-2 border-2 border-black">
-                  {totalPages > 0 &&
-                    Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                      (pageNum) => (
-                        <button
-                          key={pageNum}
-                          onClick={() => togglePageSelection(pageNum)}
-                          className={`w-10 h-10 flex items-center justify-center border-2 border-black font-bold ${
-                            file.selectedPages.includes(pageNum)
-                              ? "bg-[#FF3A5E] text-white"
-                              : "bg-white text-black hover:bg-[#4DCCFF]"
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      )
-                    )}
+                <div className="flex flex-wrap gap-2 mb-4 max-h-[200px] overflow-y-auto p-2 border-2 border-black bg-white">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (pageNum) => (
+                      <button
+                        key={pageNum}
+                        onClick={() => togglePageSelection(pageNum)}
+                        className={`w-10 h-10 flex items-center justify-center border-2 border-black font-bold transition-all duration-200 ${
+                          file.selectedPages.includes(pageNum)
+                            ? "bg-[#FF3A5E] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] translate-x-[-2px] translate-y-[-2px]"
+                            : "bg-white text-black hover:bg-[#4DCCFF] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px]"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    )
+                  )}
                 </div>
 
                 <div className="flex gap-2 mb-6">
                   <button
                     onClick={handleSelectAll}
-                    className="flex-1 bg-[#4DCCFF] text-black px-3 py-2 border-2 border-black font-bold hover:bg-[#7DDAFF] transition-all duration-200"
+                    className="flex-1 bg-[#4DCCFF] text-black px-3 py-2 border-2 border-black font-bold hover:bg-[#7DDAFF] transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px]"
                   >
                     Select All
                   </button>
                   <button
                     onClick={handleDeselectAll}
-                    className="flex-1 bg-white text-black px-3 py-2 border-2 border-black font-bold hover:bg-[#FFDE59] transition-all duration-200"
+                    className="flex-1 bg-white text-black px-3 py-2 border-2 border-black font-bold hover:bg-[#FFDE59] transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px]"
                   >
                     Deselect All
                   </button>
@@ -370,7 +370,7 @@ export default function Page() {
                   </p>
                   {file.selectedPages.length > 0 && (
                     <p className="text-black text-sm mt-1">
-                      Pages to split:
+                      Pages to split:{" "}
                       {file.selectedPages.sort((a, b) => a - b).join(", ")}
                     </p>
                   )}
@@ -379,10 +379,10 @@ export default function Page() {
                 <button
                   onClick={handleSplit}
                   disabled={isSplitting || file.selectedPages.length === 0}
-                  className={`w-full bg-[#FF3A5E] text-white px-6 py-3 border-3 border-black font-bold hover:bg-[#FF6B87] transition-all duration-200 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] ${
+                  className={`w-full bg-[#FF3A5E] text-white px-6 py-3 border-3 border-black font-bold transition-all duration-200 ${
                     isSplitting || file.selectedPages.length === 0
                       ? "opacity-50 cursor-not-allowed"
-                      : ""
+                      : "hover:bg-[#FF6B87] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px]"
                   }`}
                 >
                   {isSplitting ? "Processing..." : "Split Selected Pages"}

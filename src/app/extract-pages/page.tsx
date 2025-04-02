@@ -1,16 +1,21 @@
 "use client";
 
 import { config } from "@/config";
-import * as pdfjsLib from "pdfjs-dist";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { Document, Page as PDFPage, pdfjs } from "react-pdf";
+import "react-pdf/dist/esm/Page/AnnotationLayer.css";
+import "react-pdf/dist/esm/Page/TextLayer.css";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  "https://unpkg.com/pdfjs-dist@5.0.375/build/pdf.worker.min.mjs";
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
 
 interface PDFFile {
   id: string;
   name: string;
   file: File;
+  url: string;
   size: number;
   numPages?: number;
   pagesToExtract: number[];
@@ -21,85 +26,50 @@ export default function Page() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const pdfUrlRef = useRef<string | null>(null);
-  const pdfDocRef = useRef<pdfjsLib.PDFDocumentProxy | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
-    // Clean up previous blob URL if it exists
-    if (pdfUrlRef.current) {
-      URL.revokeObjectURL(pdfUrlRef.current);
-    }
-
     const fileObj: PDFFile = {
       id: `${selectedFile.name}-${Date.now()}`,
       name: selectedFile.name,
       file: selectedFile,
+      url: URL.createObjectURL(selectedFile),
       size: selectedFile.size,
       pagesToExtract: [],
     };
 
-    // Create new blob URL
-    pdfUrlRef.current = URL.createObjectURL(selectedFile);
     setFile(fileObj);
     setCurrentPage(1);
   };
 
-  const renderPage = useCallback(
-    async (pageNum: number) => {
-      if (!file || !canvasRef.current || !pdfUrlRef.current) return;
-
-      try {
-        // If we don't have a PDF document loaded yet, load it
-        if (!pdfDocRef.current) {
-          const loadingTask = pdfjsLib.getDocument(pdfUrlRef.current);
-          pdfDocRef.current = await loadingTask.promise;
-        }
-
-        if (!totalPages && pdfDocRef.current) {
-          setTotalPages(pdfDocRef.current.numPages);
-        }
-
-        const page = await pdfDocRef.current.getPage(pageNum);
-        const viewport = page.getViewport({ scale: 1.5 });
-
-        const canvas = canvasRef.current;
-        const context = canvas.getContext("2d");
-        if (!context) return;
-
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        const renderContext = {
-          canvasContext: context,
-          viewport: viewport,
-        };
-        await page.render(renderContext).promise;
-      } catch (error) {
-        console.error("Error rendering PDF page:", error);
-      }
-    },
-    [file, totalPages]
-  );
-
-  useEffect(() => {
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+    setTotalPages(numPages);
+    setError(null);
+    // Reset selected pages when loading a new document
     if (file) {
-      renderPage(currentPage);
+      setFile((prev) => ({
+        ...prev!,
+        pagesToExtract: [],
+      }));
     }
-  }, [file, currentPage, renderPage]);
+  };
+
+  const onDocumentLoadError = (err: Error) => {
+    console.error("Error loading PDF:", err);
+    setError(err.message);
+  };
 
   // Cleanup function
   useEffect(() => {
     return () => {
-      if (pdfUrlRef.current) {
-        URL.revokeObjectURL(pdfUrlRef.current);
+      if (file?.url) {
+        URL.revokeObjectURL(file.url);
       }
-      pdfDocRef.current = null;
     };
-  }, []);
+  }, [file]);
 
   const handlePrevPage = () => {
     if (currentPage > 1) {
@@ -124,6 +94,7 @@ export default function Page() {
 
       if (pageIndex === -1) {
         pagesToExtract.push(pageNum);
+        pagesToExtract.sort((a, b) => a - b); // Keep pages sorted
       } else {
         pagesToExtract.splice(pageIndex, 1);
       }
@@ -241,15 +212,40 @@ export default function Page() {
           )}
 
           {file && (
-            <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform -rotate-1 mb-8">
+            <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform -rotate-1 mb-8 max-w-5xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* PDF Preview */}
                 <div className="border-3 border-black p-4">
                   <h3 className="text-xl font-bold mb-4 text-black">
                     PDF Preview
                   </h3>
-                  <div className="flex justify-center items-center bg-gray-100 border-2 border-black min-h-[400px]">
-                    <canvas ref={canvasRef} className="max-w-full" />
+                  <div className="flex justify-center items-center bg-gray-100 border-2 border-black min-h-[400px] relative">
+                    <Document
+                      file={file.url}
+                      onLoadSuccess={onDocumentLoadSuccess}
+                      onLoadError={onDocumentLoadError}
+                      loading={
+                        <div className="flex items-center justify-center h-full w-full">
+                          <div className="text-black font-bold">Loading...</div>
+                        </div>
+                      }
+                      error={
+                        <div className="flex items-center justify-center h-full w-full">
+                          <div className="text-black font-bold">
+                            {error || "Error loading PDF"}
+                          </div>
+                        </div>
+                      }
+                      className="flex items-center justify-center w-full h-full"
+                    >
+                      <PDFPage
+                        pageNumber={currentPage}
+                        width={400}
+                        renderTextLayer={false}
+                        renderAnnotationLayer={false}
+                        className="max-w-full h-auto object-contain"
+                      />
+                    </Document>
                   </div>
                   <div className="flex justify-between items-center mt-4">
                     <button
