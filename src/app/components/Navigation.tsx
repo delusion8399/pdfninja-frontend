@@ -146,6 +146,7 @@ export default function Navigation() {
             <Link
               href="/login"
               className="text-black font-bold hover:text-[#FF3A5E] transition-colors duration-200"
+              onClick={() => setMobileMenuOpen(false)}
             >
               Login
             </Link>
@@ -175,6 +176,7 @@ export default function Navigation() {
                         key={item.name}
                         href={item.href}
                         className="flex items-center py-2 px-4 text-black hover:bg-[#FFDE59]"
+                        onClick={() => setMobileMenuOpen(false)}
                       >
                         {item.icon && (
                           <span className="mr-2 text-xl">{item.icon}</span>
@@ -225,6 +227,7 @@ export default function Navigation() {
                               ? "border-b-2 border-black"
                               : ""
                           }`}
+                          onClick={() => setActiveCategory(null)}
                         >
                           {item.icon && (
                             <span className="mr-2 text-xl">{item.icon}</span>
