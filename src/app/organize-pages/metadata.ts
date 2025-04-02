@@ -1,4 +1,5 @@
-import type { Metadata } from "next";
+import { Metadata } from "next";
+import { viewport } from "../viewport";
 
 export const metadata: Metadata = {
   title: "Organize PDF Pages - PDFNinja",
@@ -8,3 +9,5 @@ export const metadata: Metadata = {
     images: ["/organize-og-image.svg"],
   },
 };
+
+export { viewport };

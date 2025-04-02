@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { viewport } from "../viewport";
 
 export const metadata: Metadata = {
   title: "Compress PDF Files | PDFNinja - Free PDF Compression Tool",
@@ -28,3 +29,5 @@ export const metadata: Metadata = {
     images: ["/compress-og-image.svg"],
   },
 };
+
+export { viewport };

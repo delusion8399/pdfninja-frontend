@@ -1,4 +1,4 @@
-import { Metadata } from "next";
+import { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
   title: "PDF Ninja - PDF Tools",
@@ -15,7 +15,6 @@ export const metadata: Metadata = {
   },
   manifest: "/site.webmanifest",
   themeColor: "#0F172A",
-  viewport: "width=device-width, initial-scale=1",
   robots: "index, follow",
   openGraph: {
     type: "website",
@@ -41,4 +40,9 @@ export const metadata: Metadata = {
       "Free online PDF tools for merging, splitting, compressing, and more.",
     images: ["/og-image.png"],
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };

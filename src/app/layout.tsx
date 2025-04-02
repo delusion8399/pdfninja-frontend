@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Poppins } from "next/font/google";
 import "./globals.css";
 import Navigation from "./components/Navigation";
@@ -27,7 +27,6 @@ export const metadata: Metadata = {
   authors: [{ name: "PDFNinja Team" }],
   creator: "PDFNinja",
   publisher: "PDFNinja",
-  viewport: "width=device-width, initial-scale=1.0, maximum-scale=1.0",
   openGraph: {
     title: "PDFNinja - Swift PDF Mastery | Free PDF Tools",
     description:
@@ -57,6 +56,12 @@ export const metadata: Metadata = {
     follow: true,
   },
   metadataBase: new URL("https://pdfninja.com"),
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1.0,
+  maximumScale: 1.0,
 };
 
 export default function RootLayout({

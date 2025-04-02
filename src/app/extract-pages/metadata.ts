@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { viewport } from "../viewport";
 
 export const metadata: Metadata = {
   title: "Extract Pages from PDF | PDFNinja - Free PDF Extractor Tool",
@@ -21,3 +22,5 @@ export const metadata: Metadata = {
     ],
   },
 };
+
+export { viewport };

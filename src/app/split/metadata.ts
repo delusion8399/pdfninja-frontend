@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { viewport } from "../viewport";
 
 export const metadata: Metadata = {
   title: "Split PDF Files | PDFNinja - Free PDF Splitter Tool",
@@ -28,3 +29,5 @@ export const metadata: Metadata = {
     images: ["/split-og-image.svg"],
   },
 };
+
+export { viewport };

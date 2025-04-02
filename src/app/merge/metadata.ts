@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { viewport } from "../viewport";
 
 export const metadata: Metadata = {
   title: "Merge PDF Files | PDFNinja - Free PDF Merger Tool",
@@ -28,3 +29,5 @@ export const metadata: Metadata = {
     images: ["/merge-og-image.svg"],
   },
 };
+
+export { viewport };
