@@ -383,7 +383,7 @@ export default function Page() {
                 </div>
               ) : (
                 <div>
-                  <div className="mb-4">
+                  <div className="mb-4 text-black">
                     <p className="text-lg font-medium">
                       <span className="font-bold">File:</span> OCR_{file.name}
                     </p>
