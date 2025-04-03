@@ -28,8 +28,8 @@ const navItems: NavItem[] = [
     title: "OPTIMIZE PDF",
     items: [
       { name: "Compress PDF", href: "/compress", icon: "🗜️" },
-      { name: "Repair PDF", href: "#", icon: "🔧" },
-      { name: "OCR PDF", href: "#", icon: "👁️" },
+      { name: "Repair PDF", href: "/repair", icon: "🔧" },
+      { name: "OCR PDF", href: "/ocr", icon: "🔍" },
     ],
   },
   {
@@ -58,14 +58,14 @@ const navItems: NavItem[] = [
       { name: "Rotate PDF", href: "#", icon: "🔄" },
       { name: "Add page numbers", href: "#", icon: "🔢" },
       { name: "Add watermark", href: "#", icon: "💧" },
-      { name: "Edit PDF", href: "#", icon: "✏️" },
+      { name: "Edit PDF", href: "/edit", icon: "✏️" },
     ],
   },
   {
     title: "PDF SECURITY",
     items: [
       { name: "Unlock PDF", href: "#", icon: "🔓" },
-      { name: "Protect PDF", href: "#", icon: "🔒" },
+      { name: "Protect PDF", href: "/protect", icon: "🔒" },
       { name: "Sign PDF", href: "#", icon: "✍️" },
       { name: "Redact PDF", href: "#", icon: "⬛" },
       { name: "Compare PDF", href: "#", icon: "🔍" },

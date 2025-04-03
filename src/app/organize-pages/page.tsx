@@ -136,7 +136,7 @@ export default function Page() {
             </div>
           </div>
         }
-        className="flex items-center justify-center w-full h-full gap-5"
+        className="flex flex-wrap items-center justify-start w-full h-full gap-6"
       >
         {file.pages.map((page, index) => (
           <Draggable key={page.id} draggableId={page.id} index={index}>
@@ -145,12 +145,12 @@ export default function Page() {
                 ref={provided.innerRef}
                 {...provided.draggableProps}
                 {...provided.dragHandleProps}
-                className="relative bg-white border-4 border-black overflow-hidden transition-all duration-200 w-[200px] h-[280px] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-4px] hover:translate-y-[-4px]"
+                className="relative bg-white border-4 border-black overflow-hidden transition-all duration-200 w-[160px] h-[220px] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-4px] hover:translate-y-[-4px] flex-shrink-0"
               >
-                <div className="w-full h-[250px] relative flex items-center justify-center">
+                <div className="w-full h-[190px] relative flex items-center justify-center">
                   <PDFPage
                     pageNumber={page.pageNumber}
-                    width={200}
+                    width={160}
                     renderTextLayer={false}
                     renderAnnotationLayer={false}
                     scale={1}
@@ -270,7 +270,7 @@ export default function Page() {
                   <h3 className="text-lg font-bold mb-2 text-black">
                     Reorder Pages
                   </h3>
-                  <div className="bg-[#FFDE59] border-2 border-black p-2 mb-2">
+                  <div className="bg-[#FFDE59] border-2 border-black p-2 mb-6">
                     <p className="text-black font-medium text-sm">
                       Drag and drop the pages below to reorder them. The new
                       order will be saved when you click &quot;Save
@@ -282,7 +282,7 @@ export default function Page() {
                     <Droppable droppableId="pdf-pages" direction="horizontal">
                       {(provided) => (
                         <div
-                          className="flex flex-wrap gap-12 mb-6 px-4 max-w-[1000px] mx-auto min-h-[300px]"
+                          className="flex flex-wrap gap-6 mb-6 px-4 max-w-full mx-auto min-h-[300px] max-h-[500px] overflow-x-auto overflow-y-auto"
                           {...provided.droppableProps}
                           ref={provided.innerRef}
                         >
