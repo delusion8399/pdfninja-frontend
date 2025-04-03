@@ -1,5 +1,10 @@
+const hosts = {
+  development: "http://localhost:8080",
+  production: "https://pdfninja-backend-docker.onrender.com",
+};
+
 export const config = {
-  apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080",
+  apiBaseUrl: hosts[process.env.NODE_ENV as keyof typeof hosts] || "http://localhost:8080",
   isDevelopment: process.env.NODE_ENV === "development",
   isProduction: process.env.NODE_ENV === "production",
 };
