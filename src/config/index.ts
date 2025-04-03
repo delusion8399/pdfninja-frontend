@@ -1,5 +1,5 @@
 const hosts = {
-  development: "http://localhost:8080",
+  development: "http://localhost:8000",
   production: "https://pdfninja-backend-docker.onrender.com",
 };
 
