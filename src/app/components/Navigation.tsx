@@ -35,11 +35,11 @@ const navItems: NavItem[] = [
   {
     title: "CONVERT TO PDF",
     items: [
-      { name: "JPG to PDF", href: "#", icon: "🖼️" },
-      { name: "WORD to PDF", href: "#", icon: "📝" },
-      { name: "POWERPOINT to PDF", href: "#", icon: "📊" },
-      { name: "EXCEL to PDF", href: "#", icon: "📈" },
-      { name: "HTML to PDF", href: "#", icon: "🌐" },
+      { name: "JPG to PDF", href: "/convert/jpg-to-pdf", icon: "🖼️" },
+      { name: "WORD to PDF", href: "/convert/word-to-pdf", icon: "📝" },
+      { name: "POWERPOINT to PDF", href: "/convert/powerpoint-to-pdf", icon: "📊" },
+      { name: "EXCEL to PDF", href: "/convert/excel-to-pdf", icon: "📈" },
+      { name: "HTML to PDF", href: "/convert/html-to-pdf", icon: "🌐" },
     ],
   },
   {
