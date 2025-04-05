@@ -31,7 +31,6 @@ export default function Page() {
   const [compressionLevel, setCompressionLevel] = useState<string>("medium");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -47,12 +46,10 @@ export default function Page() {
 
     setFile(fileObj);
     setCurrentPage(1);
-    setError(null);
   };
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setTotalPages(numPages);
-    setError(null);
     if (file) {
       setFile({
         ...file,
@@ -63,7 +60,6 @@ export default function Page() {
 
   const onDocumentLoadError = (err: Error) => {
     console.error("Error loading PDF:", err);
-    setError(err.message);
   };
 
   // Cleanup URLs when component unmounts or file changes
