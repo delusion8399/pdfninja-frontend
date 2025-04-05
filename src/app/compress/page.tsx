@@ -242,7 +242,7 @@ export default function Page() {
                     className={
                       "p-4 border-3 border-black font-bold transition-all duration-200 " +
                       (compressionLevel === "low"
-                        ? "bg-[#FF3A5E] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                        ? "bg-[#FF3A5E] text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                         : "bg-white text-black hover:bg-[#FFDE59]")
                     }
                   >
@@ -256,7 +256,7 @@ export default function Page() {
                     className={
                       "p-4 border-3 border-black font-bold transition-all duration-200 " +
                       (compressionLevel === "medium"
-                        ? "bg-[#FF3A5E] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                        ? "bg-[#FF3A5E] text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                         : "bg-white text-black hover:bg-[#FFDE59]")
                     }
                   >
@@ -270,7 +270,7 @@ export default function Page() {
                     className={
                       "p-4 border-3 border-black font-bold transition-all duration-200 " +
                       (compressionLevel === "high"
-                        ? "bg-[#FF3A5E] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                        ? "bg-[#FF3A5E] text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                         : "bg-white text-black hover:bg-[#FFDE59]")
                     }
                   >
@@ -315,7 +315,7 @@ export default function Page() {
                   className={
                     "p-4 border-3 border-black font-bold transition-all duration-200 " +
                     (compressionLevel === "low"
-                      ? "bg-[#FF3A5E] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                      ? "bg-[#FF3A5E] text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                       : "bg-white text-black hover:bg-[#FFDE59]")
                   }
                 >
@@ -329,7 +329,7 @@ export default function Page() {
                   className={
                     "p-4 border-3 border-black font-bold transition-all duration-200 " +
                     (compressionLevel === "medium"
-                      ? "bg-[#FF3A5E] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                      ? "bg-[#FF3A5E] text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                       : "bg-white text-black hover:bg-[#FFDE59]")
                   }
                 >
@@ -343,7 +343,7 @@ export default function Page() {
                   className={
                     "p-4 border-3 border-black font-bold transition-all duration-200 " +
                     (compressionLevel === "high"
-                      ? "bg-[#FF3A5E] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                      ? "bg-[#FF3A5E] text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                       : "bg-white text-black hover:bg-[#FFDE59]")
                   }
                 >
@@ -387,38 +387,30 @@ export default function Page() {
                     />
                   </Document>
                 </div>
-                <div className="flex justify-between items-center mt-4">
+                <div className="flex items-center justify-center gap-4 mt-4">
                   <button
                     onClick={handlePrevPage}
-                    disabled={currentPage <= 1}
-                    className={`bg-[#4DCCFF] text-black px-4 py-2 border-2 border-black font-bold ${
-                      currentPage <= 1
-                        ? "opacity-50 cursor-not-allowed"
-                        : "hover:bg-[#7DDAFF] transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px]"
-                    }`}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 border-3 border-black bg-white text-black font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#FFDE59] transition-colors duration-200"
                   >
                     Previous
                   </button>
-                  <span className="font-bold text-black">
+                  <span className="text-black font-bold">
                     Page {currentPage} of {totalPages}
                   </span>
                   <button
                     onClick={handleNextPage}
-                    disabled={currentPage >= totalPages}
-                    className={`bg-[#4DCCFF] text-black px-4 py-2 border-2 border-black font-bold ${
-                      currentPage >= totalPages
-                        ? "opacity-50 cursor-not-allowed"
-                        : "hover:bg-[#7DDAFF] transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px]"
-                    }`}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 border-3 border-black bg-white text-black font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#FFDE59] transition-colors duration-200"
                   >
                     Next
                   </button>
                 </div>
                 <div className="mt-4">
-                  <p className="font-bold text-black">{file.name}</p>
-                  <p className="text-black">
-                    Original Size: {formatFileSize(file.size)}
-                  </p>
+                  <p className="text-black font-bold">File Details:</p>
+                  <p className="text-black">Name: {file.name}</p>
+                  <p className="text-black">Size: {formatFileSize(file.size)}</p>
+                  <p className="text-black">Pages: {file.numPages}</p>
                 </div>
               </div>
 

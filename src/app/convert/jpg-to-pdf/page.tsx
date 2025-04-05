@@ -171,8 +171,8 @@ export default function Page() {
                   className="hidden"
                 />
                 <div className="text-center">
-                  <p className="text-2xl font-bold mb-2">Drop your JPG here</p>
-                  <p className="text-lg">or click to browse</p>
+                  <p className="text-2xl font-bold mb-2 text-black">Drop your JPG here</p>
+                  <p className="text-lg text-black">or click to browse</p>
                 </div>
               </label>
             </div>
@@ -186,12 +186,12 @@ export default function Page() {
               <h2 className="text-2xl font-bold mb-4">Selected File</h2>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-lg font-medium">{file.name}</p>
-                  <p className="text-gray-600">{formatFileSize(file.size)}</p>
+                  <p className="text-lg font-medium text-black">{file.name}</p>
+                  <p className="text-black">{formatFileSize(file.size)}</p>
                 </div>
                 <button
                   onClick={() => setFile(null)}
-                  className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-bold border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+                  className="px-4 py-2 bg-red-500 hover:bg-red-600 text-black font-bold border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
                 >
                   Remove
                 </button>
@@ -201,7 +201,7 @@ export default function Page() {
             <button
               onClick={handleConvert}
               disabled={isConverting}
-              className={`w-full py-4 px-6 text-xl font-bold border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ${
+              className={`w-full py-4 px-6 text-xl font-bold border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-black ${
                 isConverting
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-[#4DCCFF] hover:bg-[#7DDAFF] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
@@ -211,7 +211,7 @@ export default function Page() {
             </button>
 
             {error && (
-              <div className="mt-4 p-4 bg-red-100 text-red-700 border-2 border-red-700 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+              <div className="mt-4 p-4 bg-red-100 text-black border-2 border-red-700 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                 {error}
               </div>
             )}
@@ -221,9 +221,9 @@ export default function Page() {
         {/* Preview and Download Section */}
         {file?.convertedUrl && (
           <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform rotate-1">
-            <h2 className="text-2xl font-bold mb-4">Converted PDF</h2>
+            <h2 className="text-2xl font-bold mb-4 text-black">Converted PDF</h2>
             <div className="mb-6">
-              <p className="text-lg font-medium">Size: {formatFileSize(file.convertedSize || 0)}</p>
+              <p className="text-lg font-medium text-black">Size: {formatFileSize(file.convertedSize || 0)}</p>
             </div>
 
             <div className="border-2 border-black rounded-lg p-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] mb-6">
@@ -244,17 +244,17 @@ export default function Page() {
                 <button
                   onClick={handlePrevPage}
                   disabled={currentPage <= 1}
-                  className="px-4 py-2 bg-gray-200 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 hover:bg-gray-300 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+                  className="px-4 py-2 bg-gray-200 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] text-black disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 hover:bg-gray-300 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
                 >
                   Previous
                 </button>
-                <span className="px-4 py-2">
+                <span className="text-black font-bold">
                   Page {currentPage} of {totalPages}
                 </span>
                 <button
                   onClick={handleNextPage}
                   disabled={currentPage >= totalPages}
-                  className="px-4 py-2 bg-gray-200 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 hover:bg-gray-300 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+                  className="px-4 py-2 bg-gray-200 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] text-black disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 hover:bg-gray-300 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
                 >
                   Next
                 </button>
