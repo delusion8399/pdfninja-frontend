@@ -138,13 +138,10 @@ export default function Page() {
 
     setIsSplitting(true);
 
-    // Convert selected pages to ranges
-    const ranges = convertToRanges(file.selectedPages);
-
     try {
       const formData = new FormData();
       formData.append("pdf", file.file);
-      formData.append("ranges", ranges);
+      formData.append("pagesToSplit", JSON.stringify(file.selectedPages));
 
       const response = await fetch(`${config.apiBaseUrl}/pdf/split`, {
         method: "POST",
@@ -175,33 +172,6 @@ export default function Page() {
     }
   };
 
-  // Helper function to convert array of page numbers to ranges
-  const convertToRanges = (pages: number[]): string => {
-    if (pages.length === 0) return "";
-
-    // Sort pages in ascending order
-    const sortedPages = [...pages].sort((a, b) => a - b);
-    const ranges: string[] = [];
-    let start = sortedPages[0];
-
-    for (let i = 1; i <= sortedPages.length; i++) {
-      if (
-        i === sortedPages.length ||
-        sortedPages[i] !== sortedPages[i - 1] + 1
-      ) {
-        if (start === sortedPages[i - 1]) {
-          ranges.push(start.toString());
-        } else {
-          ranges.push(`${start}-${sortedPages[i - 1]}`);
-        }
-        if (i < sortedPages.length) {
-          start = sortedPages[i];
-        }
-      }
-    }
-
-    return ranges.join(",");
-  };
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;

@@ -27,6 +27,7 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [processedPdfUrl, setProcessedPdfUrl] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -145,14 +146,27 @@ export default function Page() {
     }
 
     setIsProcessing(true);
+    setProcessedPdfUrl(null); // Reset processed PDF URL
     const formData = new FormData();
     formData.append("pdf", file.file);
     formData.append("pagesToRemove", JSON.stringify(file.pagesToRemove));
+
+    console.log("Sending request with:", {
+      filename: file.name,
+      fileSize: file.size,
+      pagesToRemove: file.pagesToRemove,
+    });
 
     try {
       const response = await fetch(`${config.apiBaseUrl}/pdf/remove-pages`, {
         method: "POST",
         body: formData,
+      });
+
+      console.log("Response status:", response.status);
+      console.log("Response headers:", {
+        contentType: response.headers.get("content-type"),
+        contentLength: response.headers.get("content-length"),
       });
 
       if (!response.ok) {
@@ -161,12 +175,36 @@ export default function Page() {
       }
 
       const blob = await response.blob();
+      console.log("Received blob:", {
+        type: blob.type,
+        size: blob.size,
+      });
+      
+      // Validate blob content type and size
+      if (!blob.type.includes('pdf')) {
+        throw new Error('Received invalid file format. Expected PDF.');
+      }
+
+      if (blob.size === 0) {
+        throw new Error('Received empty PDF file.');
+      }
+
+      // Create URL for preview
       const url = window.URL.createObjectURL(blob);
+      console.log("Created blob URL:", url);
+      setProcessedPdfUrl(url);
+
+      // Create download link
       const link = document.createElement("a");
       link.href = url;
       link.download = `${file.name.replace(".pdf", "")}_removed.pdf`;
+      
+      // Log before triggering download
+      console.log("Initiating download with filename:", link.download);
       link.click();
-      window.URL.revokeObjectURL(url);
+
+      // Don't revoke URL immediately since we need it for preview
+      // We'll clean it up when a new file is processed or component unmounts
     } catch (error) {
       console.error("Error removing pages from PDF:", error);
       alert(
@@ -178,6 +216,15 @@ export default function Page() {
       setIsProcessing(false);
     }
   };
+
+  // Cleanup processed PDF URL when component unmounts or new file is processed
+  useEffect(() => {
+    return () => {
+      if (processedPdfUrl) {
+        URL.revokeObjectURL(processedPdfUrl);
+      }
+    };
+  }, [processedPdfUrl]);
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
@@ -367,6 +414,36 @@ export default function Page() {
                     {isProcessing ? "Processing..." : "Remove Selected Pages"}
                   </button>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Add preview of processed PDF */}
+          {processedPdfUrl && (
+            <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform rotate-1 mb-8 max-w-5xl mx-auto">
+              <h3 className="text-xl font-bold mb-4 text-black">Processed PDF Preview</h3>
+              <div className="border-3 border-black p-4">
+                <Document
+                  file={processedPdfUrl}
+                  onLoadSuccess={(pdf) => {
+                    console.log('Processed PDF loaded successfully:', pdf);
+                  }}
+                  onLoadError={(error) => {
+                    console.error('Error loading processed PDF:', error);
+                  }}
+                  loading={
+                    <div className="flex items-center justify-center h-full w-full">
+                      <div className="text-black font-bold">Loading processed PDF...</div>
+                    </div>
+                  }
+                  error={
+                    <div className="flex items-center justify-center h-full w-full">
+                      <div className="text-red-500 font-bold">Error loading processed PDF</div>
+                    </div>
+                  }
+                >
+                  <PDFPage pageNumber={1} width={400} />
+                </Document>
               </div>
             </div>
           )}

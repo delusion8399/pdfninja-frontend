@@ -98,19 +98,19 @@ export default function Navigation() {
   };
 
   return (
-    <header className="bg-white border-4 border-black sticky top-0 z-[100] shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+    <header className="bg-white border-4 border-black sticky top-0 z-[100] shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] hover:shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex justify-between items-center">
           <Link
             href="/"
-            className="text-3xl font-black text-black tracking-tight transform -rotate-2"
+            className="text-3xl font-black text-black tracking-tight transform -rotate-2 hover:rotate-0 hover:scale-105 transition-all duration-300"
           >
             PDFNinja
           </Link>
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 border-2 border-black hover:bg-[#FFDE59]"
+            className="md:hidden p-2 border-3 border-black hover:bg-[#FFDE59] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 transform hover:scale-105"
             onClick={toggleMobileMenu}
             aria-label="Toggle mobile menu"
           >
@@ -123,11 +123,11 @@ export default function Navigation() {
           <div className="hidden md:flex items-center space-x-4">
             <Link
               href="/login"
-              className="text-black font-bold hover:text-[#FF3A5E] transition-colors duration-200 transform hover:scale-105"
+              className="text-black font-bold hover:text-[#FF3A5E] transition-colors duration-300 transform hover:scale-105"
             >
               Login
             </Link>
-            <button className="bg-[#FF3A5E] text-white px-4 py-2 border-3 border-black font-bold hover:bg-[#FF6B87] transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px]">
+            <button className="bg-[#FF3A5E] text-white px-4 py-2 border-3 border-black font-bold hover:bg-[#FF6B87] transition-all duration-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transform hover:scale-105">
               Sign Up
             </button>
           </div>
@@ -145,12 +145,12 @@ export default function Navigation() {
           <div className="flex justify-between py-4 border-b-2 border-black">
             <Link
               href="/login"
-              className="text-black font-bold hover:text-[#FF3A5E] transition-colors duration-200"
+              className="text-black font-bold hover:text-[#FF3A5E] transition-colors duration-300 transform hover:scale-105"
               onClick={() => setMobileMenuOpen(false)}
             >
               Login
             </Link>
-            <button className="bg-[#FF3A5E] text-white px-4 py-2 border-3 border-black font-bold hover:bg-[#FF6B87] transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <button className="bg-[#FF3A5E] text-white px-4 py-2 border-3 border-black font-bold hover:bg-[#FF6B87] transition-all duration-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transform hover:scale-105">
               Sign Up
             </button>
           </div>
@@ -160,11 +160,11 @@ export default function Navigation() {
             {navItems.map((category) => (
               <div key={category.title} className="border-b-2 border-black">
                 <button
-                  className="w-full text-left py-3 px-2 font-bold text-black flex justify-between items-center"
+                  className="w-full text-left py-3 px-2 font-bold text-black flex justify-between items-center hover:bg-[#FFDE59] transition-colors duration-300 transform hover:scale-105"
                   onClick={() => toggleMobileSubmenu(category.title)}
                 >
                   {category.title}
-                  <span>
+                  <span className="text-xl">
                     {mobileSubmenuOpen === category.title ? "−" : "+"}
                   </span>
                 </button>
@@ -175,11 +175,11 @@ export default function Navigation() {
                       <Link
                         key={item.name}
                         href={item.href}
-                        className="flex items-center py-2 px-4 text-black hover:bg-[#FFDE59]"
+                        className="flex items-center py-2 px-4 text-black hover:bg-[#FFDE59] transition-colors duration-300 transform hover:scale-105"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         {item.icon && (
-                          <span className="mr-2 text-xl">{item.icon}</span>
+                          <span className="mr-2 text-xl transform hover:scale-110 transition-transform duration-300">{item.icon}</span>
                         )}
                         {item.name}
                       </Link>
@@ -205,13 +205,13 @@ export default function Navigation() {
                   }`}
                   onMouseEnter={() => handleCategoryHover(category.title)}
                 >
-                  <div className="py-3 px-2 font-bold text-center hover:bg-[#FFDE59] transition-colors cursor-pointer text-black">
+                  <div className="py-3 px-2 font-bold text-center hover:bg-[#FFDE59] transition-colors cursor-pointer text-black transform hover:scale-105">
                     {category.title}
                   </div>
 
                   {/* Dropdown Menu */}
                   <div
-                    className={`absolute left-0 w-[300px] bg-white border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 z-[400] ${
+                    className={`absolute left-0 w-[300px] bg-white border-4 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 z-[400] ${
                       activeCategory === category.title
                         ? "opacity-100 visible"
                         : "opacity-0 invisible pointer-events-none"
@@ -222,7 +222,7 @@ export default function Navigation() {
                         <Link
                           key={item.name}
                           href={item.href}
-                          className={`flex items-center px-4 py-3 text-black font-bold hover:bg-[#FFDE59] ${
+                          className={`flex items-center px-4 py-3 text-black font-bold hover:bg-[#FFDE59] transition-colors duration-300 transform hover:scale-105 ${
                             index !== category.items.length - 1
                               ? "border-b-2 border-black"
                               : ""
@@ -230,7 +230,7 @@ export default function Navigation() {
                           onClick={() => setActiveCategory(null)}
                         >
                           {item.icon && (
-                            <span className="mr-2 text-xl">{item.icon}</span>
+                            <span className="mr-2 text-xl transform hover:scale-110 transition-transform duration-300">{item.icon}</span>
                           )}
                           {item.name}
                         </Link>

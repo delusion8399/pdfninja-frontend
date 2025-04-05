@@ -124,8 +124,8 @@ export default function MergePage() {
         <div className="flex-1 relative">
           {files.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full py-12">
-              <div className="bg-white border-4 border-black p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transform rotate-1 relative max-w-2xl w-full text-center">
-                <h2 className="text-4xl font-black text-black mb-4 tracking-tight">
+              <div className="bg-white border-4 border-black p-8 shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] transform rotate-1 relative max-w-2xl w-full text-center hover:rotate-0 hover:shadow-[24px_24px_0px_0px_rgba(0,0,0,1)] transition-all duration-300">
+                <h2 className="text-4xl font-black text-black mb-4 tracking-tight transform hover:scale-105 transition-transform duration-300">
                   Merge PDF Files
                 </h2>
                 <p className="text-xl text-black mb-8 font-medium">
@@ -134,7 +134,7 @@ export default function MergePage() {
                 </p>
                 <label
                   htmlFor="pdf-upload"
-                  className="bg-[#FF3A5E] text-white px-8 py-4 border-3 border-black font-bold cursor-pointer hover:bg-[#FF6B87] transition-all duration-200 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] inline-block"
+                  className="bg-[#FF3A5E] text-white px-8 py-4 border-3 border-black font-bold cursor-pointer hover:bg-[#FF6B87] transition-all duration-300 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-6px] hover:translate-y-[-6px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none inline-block transform hover:scale-105"
                 >
                   Select PDF files
                   <input
@@ -146,8 +146,8 @@ export default function MergePage() {
                     onChange={handleFileChange}
                   />
                 </label>
-                <p className="text-black mt-4 font-bold">or drop PDFs here</p>
-                <div className="absolute -top-6 -right-6 bg-[#4DCCFF] border-3 border-black p-3 transform rotate-12 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                <p className="text-black mt-4 font-bold transform hover:scale-105 transition-transform duration-300">or drop PDFs here</p>
+                <div className="absolute -top-6 -right-6 bg-[#4DCCFF] border-3 border-black p-3 transform rotate-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:rotate-0 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:scale-110 transition-all duration-300">
                   <span className="text-xl font-black">DRAG & DROP</span>
                 </div>
               </div>
@@ -189,10 +189,10 @@ export default function MergePage() {
 
               <label
                 htmlFor="pdf-upload-more"
-                className="absolute top-4 right-4 bg-[#FF3A5E] text-white w-16 h-16 flex items-center justify-center rounded-full border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer hover:bg-[#FF6B87] transition-all duration-200 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px]"
+                className="absolute top-4 right-4 bg-[#FF3A5E] text-white w-16 h-16 flex items-center justify-center rounded-full border-3 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] cursor-pointer hover:bg-[#FF6B87] transition-all duration-300 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-6px] hover:translate-y-[-6px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transform hover:scale-110"
               >
                 <span className="text-2xl font-black">+</span>
-                <span className="absolute -top-2 -right-2 bg-[#4DCCFF] text-black text-sm font-black rounded-full w-8 h-8 flex items-center justify-center border-2 border-black">
+                <span className="absolute -top-2 -right-2 bg-[#4DCCFF] text-black text-sm font-black rounded-full w-8 h-8 flex items-center justify-center border-2 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:scale-110 transition-all duration-300">
                   {files.length}
                 </span>
                 <input
@@ -210,11 +210,11 @@ export default function MergePage() {
 
         {files.length > 0 && (
           <div className="w-full md:w-80 md:border-l-4 md:border-black flex flex-col mt-8 md:mt-0">
-            <div className="p-6 bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] m-4">
-              <h3 className="text-3xl font-black text-black capitalize mb-6 transform -rotate-2">
+            <div className="p-6 bg-white border-4 border-black shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] m-4 transform -rotate-1 hover:rotate-0 hover:shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] transition-all duration-300">
+              <h3 className="text-3xl font-black text-black capitalize mb-6 transform -rotate-2 hover:rotate-0 hover:scale-105 transition-all duration-300">
                 Merge PDF
               </h3>
-              <div className="bg-[#4DCCFF] p-4 border-3 border-black text-black text-md font-medium mb-8">
+              <div className="bg-[#4DCCFF] p-4 border-3 border-black text-black text-md font-medium mb-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:scale-105 transition-all duration-300">
                 <p>
                   To change the order of your PDFs, drag and drop the files as
                   you want.
@@ -223,7 +223,7 @@ export default function MergePage() {
               <button
                 onClick={handleMerge}
                 disabled={isMerging || files.length < 2}
-                className={`w-full bg-[#FF3A5E] text-white px-4 py-3 border-3 border-black font-bold hover:bg-[#FF6B87] transition-all duration-200 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] flex items-center justify-center ${
+                className={`w-full bg-[#FF3A5E] text-white px-4 py-3 border-3 border-black font-bold hover:bg-[#FF6B87] transition-all duration-300 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-6px] hover:translate-y-[-6px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center transform hover:scale-105 ${
                   isMerging || files.length < 2
                     ? "opacity-50 cursor-not-allowed"
                     : ""
@@ -231,7 +231,7 @@ export default function MergePage() {
               >
                 {isMerging ? "Merging..." : "Merge PDF"}
                 <svg
-                  className="w-5 h-5 ml-2"
+                  className="w-5 h-5 ml-2 transform hover:scale-110 transition-transform duration-300"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
