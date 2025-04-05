@@ -1,7 +1,7 @@
 const hosts = {
   development: "http://localhost:8000",
-  // production: "https://pdfninja-backend-docker.onrender.com",
-  production: "https://pdfninja-backend.leapcell.app",
+  production: "https://pdfninja-backend-docker.onrender.com",
+  // production: "https://pdfninja-backend.leapcell.app",
 };
 
 export const config = {
