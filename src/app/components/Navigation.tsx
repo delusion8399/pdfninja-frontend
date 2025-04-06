@@ -49,7 +49,7 @@ const navItems: NavItem[] = [
       { name: "PDF to WORD", href: "/convert/pdf-to-word", icon: "📝" },
       { name: "PDF to POWERPOINT", href: "/convert/pdf-to-powerpoint", icon: "📊" },
       { name: "PDF to EXCEL", href: "/convert/pdf-to-excel", icon: "📈" },
-      { name: "PDF to PDF/A", href: "#", icon: "📁" },
+      { name: "PDF to PDF/A", href: "/convert/pdf-to-pdfa", icon: "📁" },
     ],
   },
   {
