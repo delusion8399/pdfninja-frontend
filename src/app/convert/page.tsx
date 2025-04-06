@@ -34,6 +34,30 @@ const conversionTools = [
     icon: "🌐",
     href: "/convert/html-to-pdf",
   },
+  {
+    title: "PDF to JPG",
+    description: "Convert PDF pages to JPG images",
+    icon: "🖼️",
+    href: "/convert/pdf-to-jpg",
+  },
+  {
+    title: "PDF to Word",
+    description: "Convert PDF documents to Word format",
+    icon: "📝",
+    href: "/convert/pdf-to-word",
+  },
+  {
+    title: "PDF to PowerPoint",
+    description: "Convert PDF documents to PowerPoint presentations",
+    icon: "📊",
+    href: "/convert/pdf-to-powerpoint",
+  },
+  {
+    title: "PDF to Excel",
+    description: "Convert PDF documents to Excel spreadsheets",
+    icon: "📈",
+    href: "/convert/pdf-to-excel",
+  },
 ];
 
 export default function Page() {
@@ -43,10 +67,10 @@ export default function Page() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white border-4 border-black p-8 shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] transform -rotate-1 hover:rotate-0 hover:shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 mb-12">
           <h1 className="text-4xl md:text-5xl font-black text-black mb-4 tracking-tight transform rotate-1 hover:rotate-0 hover:scale-105 transition-all duration-300">
-            Convert to PDF
+            Convert Files
           </h1>
           <p className="text-xl text-black mb-6 max-w-3xl mx-auto leading-relaxed font-medium transform hover:scale-105 transition-transform duration-300">
-            Convert your files to PDF format with high quality and ease. Choose from various file types to convert.
+            Convert your files between different formats with high quality and ease. Choose from various file types to convert.
           </p>
         </div>
 
