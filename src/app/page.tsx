@@ -60,8 +60,8 @@ export default function NeoBrutalismHome() {
       {/* Hero Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-12 pb-8 sm:pb-16">
         <div className="text-center">
-          <div className="bg-white border-4 border-black p-4 sm:p-8 mb-8 sm:mb-12 shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] sm:shadow-[24px_24px_0px_0px_rgba(0,0,0,1)] transform rotate-1 relative hover:rotate-0 hover:shadow-[28px_28px_0px_0px_rgba(0,0,0,1)] transition-all duration-300">
-            <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-black mb-2 sm:mb-4 tracking-tight transform hover:scale-105 transition-transform duration-300">
+        <div className="bg-white border-4 border-black p-4 sm:p-8 mb-8 sm:mb-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] sm:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transform rotate-1 relative">
+            <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-black mb-2 sm:mb-4 tracking-tight">
               PDFNinja: Swift PDF Mastery
             </h2>
             <p className="text-base sm:text-xl text-black mb-4 sm:mb-8 max-w-2xl mx-auto leading-relaxed font-medium">
@@ -87,8 +87,7 @@ export default function NeoBrutalismHome() {
               <Link
                 href={tool.href}
                 key={index}
-                className={`bg-white border-4 border-black p-4 sm:p-6 shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] sm:shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 cursor-pointer hover:shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] sm:hover:shadow-[24px_24px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-8px] hover:translate-y-[-8px] sm:hover:translate-x-[-10px] sm:hover:translate-y-[-10px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none hover:scale-105 ${tool.rotate} hover:rotate-0`}
-              >
+                className={`bg-white border-4 border-black p-4 sm:p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 cursor-pointer hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] sm:hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] sm:hover:translate-x-[-4px] sm:hover:translate-y-[-4px] ${tool.rotate}`}              >
                 <div className="flex items-start space-x-2 sm:space-x-4">
                   <div
                     className={`text-2xl sm:text-4xl p-2 sm:p-3 rounded-md shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 transform hover:scale-110`}
