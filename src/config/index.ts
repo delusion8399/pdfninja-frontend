@@ -1,8 +1,6 @@
 const hosts = {
-  // development: "http://152.67.160.174:8000",
   development: "http://localhost:8000",
-  // production: "https://pdfninja-backend.onrender.com",
-  production: "http://152.67.160.174:8000",
+  production: "https://pdf.maxxfibernet.in",
 };
 
 export const config = {
