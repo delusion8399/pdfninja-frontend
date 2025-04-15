@@ -55,9 +55,9 @@ const navItems: NavItem[] = [
   {
     title: "EDIT PDF",
     items: [
-      { name: "Rotate PDF", href: "#", icon: "🔄" },
-      { name: "Add page numbers", href: "#", icon: "🔢" },
-      { name: "Add watermark", href: "#", icon: "💧" },
+      { name: "Rotate PDF", href: "/rotate-pdf", icon: "🔄" },
+      { name: "Add page numbers", href: "/add-page-numbers", icon: "🔢" },
+      { name: "Add watermark", href: "/add-watermark", icon: "💧" },
       { name: "Edit PDF", href: "/edit", icon: "✏️" },
     ],
   },
