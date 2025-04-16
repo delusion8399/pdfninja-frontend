@@ -83,7 +83,7 @@ export default function Page() {
 
     // Calculate new rotation (add the angle and keep it within 0-270 range)
     const currentRotation = file.pageRotations[currentPage] || 0;
-    let newRotation = (currentRotation + angle) % 360 as RotationAngle;
+    const newRotation = (currentRotation + angle) % 360 as RotationAngle;
 
     // Update the rotation for the current page
     const updatedRotations = { ...file.pageRotations };

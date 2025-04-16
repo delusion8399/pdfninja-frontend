@@ -443,7 +443,7 @@ export default function Page() {
                             "top-left", "top-center", "top-right",
                             "middle-left", "middle-center", "middle-right",
                             "bottom-left", "bottom-center", "bottom-right"
-                          ].map((position, index) => (
+                          ].map((position, ) => (
                             <button
                               key={position}
                               type="button"
