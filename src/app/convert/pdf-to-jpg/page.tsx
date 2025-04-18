@@ -9,8 +9,8 @@ interface ConvertFile {
   file: File;
   url: string;
   size: number;
-  convertedUrls?: string[];
-  convertedSizes?: number[];
+  convertedBlob?: Blob;
+  isConverted?: boolean;
 }
 
 export default function Page() {
@@ -64,14 +64,18 @@ export default function Page() {
         throw new Error(errorData.error || "Failed to convert file");
       }
 
+      // Get the ZIP file as a blob
       const blob = await response.blob();
-      const convertedUrl = URL.createObjectURL(blob);
-      
+
+      // Update file state with the converted blob
       setFile({
         ...file,
-        convertedUrls: [convertedUrl],
-        convertedSizes: [blob.size],
+        convertedBlob: blob,
+        isConverted: true
       });
+
+      // Show success message
+      setError("Conversion successful! Your PDF has been converted to JPG images.");
     } catch (err) {
       console.error("Error converting file:", err);
       setError(err instanceof Error ? err.message : "Failed to convert file");
@@ -80,15 +84,22 @@ export default function Page() {
     }
   };
 
-  const handleDownload = (index: number) => {
-    if (!file?.convertedUrls?.[index]) return;
+  const handleDownloadZip = () => {
+    if (!file?.convertedBlob) return;
 
+    // Create a URL for the blob
+    const url = URL.createObjectURL(file.convertedBlob);
+
+    // Create a link element to trigger the download
     const link = document.createElement("a");
-    link.href = file.convertedUrls[index];
-    link.download = `${file.name.replace(/\.[^/.]+$/, "")}-page-${index + 1}.jpg`;
+    link.href = url;
+    link.download = `${file.name.replace(/\.pdf$/i, "")}_images.zip`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
+    // Revoke the URL to free up memory
+    URL.revokeObjectURL(url);
   };
 
   // Cleanup URLs when component unmounts or file changes
@@ -96,9 +107,6 @@ export default function Page() {
     return () => {
       if (file) {
         URL.revokeObjectURL(file.url);
-        if (file.convertedUrls) {
-          file.convertedUrls.forEach(url => URL.revokeObjectURL(url));
-        }
       }
     };
   }, [file]);
@@ -179,42 +187,57 @@ export default function Page() {
             </button>
 
             {error && (
-              <div className="mt-4 p-4 bg-red-100 text-black border-2 border-red-700 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                {error}
+              <div className={`mt-4 p-4 ${error.includes("Conversion successful") ? "bg-green-100 border-green-700" : "bg-red-100 border-red-700"} text-black border-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]`}>
+                {error.includes("Conversion successful") ? (
+                  <div className="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="font-medium">{error}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span className="font-medium">{error}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
         )}
 
-        {/* Preview and Download Section */}
-        {file?.convertedUrls && (
-          <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform rotate-1">
-            <h2 className="text-2xl font-bold mb-4 text-black">Converted Images</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {file.convertedUrls.map((url, index) => (
-                <div key={index} className="border-2 border-black p-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                  <img
-                    src={url}
-                    alt={`Page ${index + 1}`}
-                    className="w-full h-48 object-contain mb-2"
-                  />
-                  <div className="flex justify-between items-center">
-                    <span className="text-black font-medium">
-                      Page {index + 1}
-                    </span>
-                    <button
-                      onClick={() => handleDownload(index)}
-                      className="px-4 py-2 bg-[#4DCCFF] hover:bg-[#7DDAFF] text-black font-bold border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
-                    >
-                      Download
-                    </button>
-                  </div>
+        {/* Download Section */}
+        {file?.isConverted && (
+          <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform rotate-1 mt-8">
+            <h2 className="text-3xl font-black mb-4 text-black tracking-tight">Download File</h2>
+            <p className="text-lg mb-6 text-black font-medium">Your PDF has been successfully converted to JPG images and packaged as a ZIP file.</p>
+
+            <div className="flex items-center justify-between mb-4 p-4 border-2 border-black bg-gray-100">
+              <div className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <div>
+                  <p className="font-bold text-black">{file.name.replace(/\.pdf$/i, "")}_images.zip</p>
+                  <p className="text-sm text-black">{file.convertedBlob ? formatFileSize(file.convertedBlob.size) : ""}</p>
                 </div>
-              ))}
+              </div>
             </div>
+
+            <button
+              onClick={handleDownloadZip}
+              className="w-full py-4 px-6 text-xl font-bold border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-black bg-[#4DCCFF] hover:bg-[#7DDAFF] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Download ZIP File
+            </button>
           </div>
         )}
       </main>
     </div>
   );
-} 
+}
